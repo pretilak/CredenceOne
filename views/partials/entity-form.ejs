@@ -1,0 +1,209 @@
+<div class="modal-overlay">
+
+    <div class="modal-box">
+
+        <h2>
+            <%= isEdit ? 'Edit Entity' : 'Add Entity' %>
+        </h2>
+
+        <form hx-post="<%= isEdit
+                ? `/settings/entities/${entity.id}`
+                : '/settings/entities'
+            %>" hx-target="#main-content" hx-swap="innerHTML" hx-on="
+                    htmx:afterSwap:
+                    if(event.detail.target.id === 'main-content'){
+                        closeModal();
+                    }"
+            >
+
+            <!-- ============================= -->
+            <!-- Name -->
+            <!-- ============================= -->
+            <div class="form-group form-full">
+                <label>Name</label>
+
+                <input type="text" name="name" value="<%= entity.name || '' %>" required>
+            </div>
+
+            <!-- ============================= -->
+            <!-- Type -->
+            <!-- ============================= -->
+            <div class="form-group">
+                <label>Type</label>
+
+                <select name="entity_type" required>
+
+                    <option value="">Select</option>
+
+                    <option value="customer" <%=entity.entity_type==='customer' ? 'selected' : '' %>>
+                        Customer
+                    </option>
+
+                    <option value="supplier" <%=entity.entity_type==='supplier' ? 'selected' : '' %>>
+                        Supplier
+                    </option>
+
+                    <option value="both" <%=entity.entity_type==='both' ? 'selected' : '' %>>
+                        Both
+                    </option>
+
+                    <option value="logistics" <%=entity.entity_type==='logistics' ? 'selected' : '' %>>
+                        Logistics
+                    </option>
+
+                </select>
+            </div>
+
+            <!-- ============================= -->
+            <!-- Email -->
+            <!-- ============================= -->
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" value="<%= entity.email || '' %>">
+            </div>
+
+            <!-- ============================= -->
+            <!-- Phone -->
+            <!-- ============================= -->
+            <div class="form-group">
+                <label>Phone</label>
+                <input type="text" name="phone" value="<%= entity.phone || '' %>">
+            </div>
+
+            <!-- ============================= -->
+            <!-- Tax ID -->
+            <!-- ============================= -->
+            <div class="form-group">
+                <label>Tax ID</label>
+                <input type="text" name="tax_id" value="<%= entity.tax_id || '' %>">
+            </div>
+
+            <!-- ============================= -->
+            <!-- Currency -->
+            <!-- ============================= -->
+            <div class="form-group">
+                <label>Currency</label>
+                <select name="currency_code">
+                    <option value="">
+                        Select Currency
+                    </option>
+
+                    <% currencies.forEach(c=> { %>
+                        <option value="<%= c.code %>" <%=entity.currency_code===c.code ? 'selected' : '' %>
+                            >
+                            <%= c.code %>
+                                -
+                                <%= c.name %>
+                                    (
+                                    <%= c.symbol %>
+                                        )
+                        </option>
+                        <% }) %>
+                </select>
+            </div>
+
+            <!-- ============================= -->
+            <!-- Active -->
+            <!-- ============================= -->
+
+            <div class="checkbox-group">
+
+                <input type="checkbox" name="is_active" <%=entity.is_active !==false ? 'checked' : '' %>>
+
+                <label>
+                    Active
+                </label>
+
+            </div>
+
+            <!-- ============================= -->
+            <!-- Default Forwarder -->
+            <!-- ============================= -->
+
+            <div id="forwarder-section">
+
+                <div class="form-group form-full">
+
+                    <label>
+                        Default Forwarder
+                    </label>
+
+                    <select name="default_forwarder_id">
+
+                        <option value="">
+                            Select
+                        </option>
+
+                        <% logisticsEntities.forEach(l=> { %>
+
+                            <option value="<%= l.id %>" <%=entity.default_forwarder_id==l.id ? 'selected' : '' %>>
+
+                                <%= l.name %>
+
+                            </option>
+
+                            <% }) %>
+
+                    </select>
+
+                </div>
+
+                <div class="form-group form-full">
+
+                    <label>
+                        Forwarder Account No
+                    </label>
+
+                    <input type="text" name="forwarder_account_no" value="<%= entity.forwarder_account_no || '' %>">
+
+                </div>
+
+            </div>
+
+
+            <!-- ============================= -->
+            <!-- Actions -->
+            <!-- ============================= -->
+
+            <div class="modal-actions">
+
+                <button type="button" onclick="closeModal()">
+
+                    Cancel
+
+                </button>
+
+                <button type="submit" id="saveBtn" disabled>
+
+                    Save
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<script>
+
+    setTimeout(() => {
+
+        const form =
+            document.querySelector(
+                '#modal form'
+            );
+
+        if (form) {
+
+            enableSaveOnChange(
+                form
+            );
+
+        }
+
+    }, 0);
+
+</script>

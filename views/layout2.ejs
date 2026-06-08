@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>
+        <%= title || "CredenceOne" %>
+    </title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+</head>
+
+<body>
+    <div class="container">
+
+        <div class="logo">
+
+            <a href="/" class="logo-link">
+
+                CadenceOne
+
+            </a>
+
+        </div>
+
+        <% if (user) { %>
+
+            <div class="nav">
+
+                <!-- ☰ Hamburger -->
+                <button class="menu-toggle" onclick="toggleMenu()">
+                    ☰
+                </button>
+
+                <ul id="nav-menu">
+
+                    <!-- ========================================= -->
+                    <!-- Dashboard -->
+                    <!-- ========================================= -->
+
+                    <% if (permissions.includes('dashboard.view')) { %>
+
+                        <li>
+                            <a href="/dashboard" class="<%= activePage === 'dashboard' ? 'active' : '' %>"
+                                hx-get="/dashboard" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true">
+
+                                Dashboard
+                            </a>
+                        </li>
+
+                        <% } %>
+
+
+                            <!-- ========================================= -->
+                            <!-- Transactions -->
+                            <!-- ========================================= -->
+
+                            <% if (permissions.includes('transactions.view')) { %>
+
+                                <li>
+                                    <a href="/transactions"
+                                        class="<%= activePage === 'transactions' ? 'active' : '' %>">
+
+                                        Transactions
+                                    </a>
+                                </li>
+
+                                <% } %>
+
+
+                                    <!-- ========================================= -->
+                                    <!-- Sales -->
+                                    <!-- ========================================= -->
+
+                                    <% if (permissions.includes('sales.view')) { %>
+
+                                        <li>
+                                            <a href="/sales" class="<%= activePage === 'sales' ? 'active' : '' %>">
+
+                                                Sales
+                                            </a>
+                                        </li>
+
+                                        <% } %>
+
+
+                                            <!-- ========================================= -->
+                                            <!-- Purchases -->
+                                            <!-- ========================================= -->
+
+                                            <% if (permissions.includes('purchases.view')) { %>
+
+                                                <li>
+                                                    <a href="/purchases"
+                                                        class="<%= activePage === 'purchases' ? 'active' : '' %>">
+
+                                                        Purchases
+                                                    </a>
+                                                </li>
+
+                                                <% } %>
+
+
+                                                    <!-- ========================================= -->
+                                                    <!-- Expenses -->
+                                                    <!-- ========================================= -->
+
+                                                    <% if (permissions.includes('expenses.view')) { %>
+
+                                                        <li>
+                                                            <a href="/expenses"
+                                                                class="<%= activePage === 'expenses' ? 'active' : '' %>">
+
+                                                                Expenses
+                                                            </a>
+                                                        </li>
+
+                                                        <% } %>
+
+
+                                                            <!-- ========================================= -->
+                                                            <!-- Reports -->
+                                                            <!-- ========================================= -->
+
+                                                            <% if (permissions.includes('reports.view')) { %>
+
+                                                                <li>
+                                                                    <a href="/reports"
+                                                                        class="<%= activePage === 'reports' ? 'active' : '' %>">
+
+                                                                        Reports
+                                                                    </a>
+                                                                </li>
+
+                                                                <% } %>
+
+
+                                                                    <!-- ========================================= -->
+                                                                    <!-- Settings -->
+                                                                    <!-- ========================================= -->
+
+                                                                    <% if ( permissions.includes('settings.view') ||
+                                                                        permissions.includes('coa.view') ) { %>
+
+                                                                        <li class="dropdown">
+
+                                                                            <a href="javascript:void(0);"
+                                                                                onclick="toggleSettingsMenu(event)"
+                                                                                class="<%= ['settings','coa'].includes(activePage) ? 'active' : '' %>">
+
+                                                                                Settings ▾
+                                                                            </a>
+
+                                                                            <ul class="dropdown-menu"
+                                                                                id="settings-menu">
+
+                                                                                <!-- ============================= -->
+                                                                                <!-- Chart of Accounts -->
+                                                                                <!-- ============================= -->
+
+                                                                                <% if (permissions.includes('coa.view'))
+                                                                                    { %>
+
+                                                                                    <li>
+                                                                                        <a href="/settings/coa"
+                                                                                            class="<%= activePage === 'coa' ? 'active' : '' %>"
+                                                                                            hx-get="/settings/coa"
+                                                                                            hx-target="#main-content"
+                                                                                            hx-swap="innerHTML"
+                                                                                            hx-push-url="true">
+
+                                                                                            Chart of Accounts
+                                                                                        </a>
+                                                                                    </li>
+
+                                                                                    <% if
+                                                                                        (permissions.includes('entities.view'))
+                                                                                        { %>
+
+                                                                                        <li>
+                                                                                            <a href="/settings/entities"
+                                                                                                class="<%= activePage === 'entities' ? 'active' : '' %>"
+                                                                                                hx-get="/settings/entities"
+                                                                                                hx-target="#main-content"
+                                                                                                hx-swap="innerHTML"
+                                                                                                hx-push-url="true">
+
+                                                                                                Entities
+                                                                                            </a>
+                                                                                        </li>
+
+                                                                                        <% } %>
+
+
+                                                                                            <% } %>
+
+
+
+                                                                            </ul>
+
+                                                                        </li>
+
+                                                                        <% } %>
+
+
+                                                                            <!-- ========================================= -->
+                                                                            <!-- Users -->
+                                                                            <!-- ========================================= -->
+
+                                                                            <% if ( permissions.includes('users.view')
+                                                                                || permissions.includes('users.manage')
+                                                                                ) { %>
+
+                                                                                <li>
+                                                                                    <a href="/users"
+                                                                                        class="<%= activePage === 'users' ? 'active' : '' %>">
+
+                                                                                        Users
+                                                                                    </a>
+                                                                                </li>
+
+                                                                                <% } %>
+
+                </ul>
+
+            </div>
+
+            <% } %>
+
+
+                <!-- ============================================= -->
+                <!-- User Section -->
+                <!-- ============================================= -->
+
+                <div class="user">
+
+                    <% if (user) { %>
+
+                        Hi, <%= user.displayName %> |
+
+                            <a href="/logout">
+                                Logout
+                            </a>
+
+                            <% } else { %>
+
+                                <a href="/login" hx-get="/login" hx-target="#main-content" hx-swap="innerHTML"
+                                    hx-push-url="true">
+
+                                    Login
+                                </a>
+
+                                <% } %>
+
+                </div>
+
+
+                <!-- ============================================= -->
+                <!-- Main Content -->
+                <!-- ============================================= -->
+
+                <main id="main-content" class="content">
+
+                    <%- body %>
+
+                </main>
+
+
+                <!-- ============================================= -->
+                <!-- Footer -->
+                <!-- ============================================= -->
+
+                <footer class="footer">
+
+                    <%- include('partials/footer.ejs') %>
+
+                </footer>
+
+    </div>
+
+    <div id="modal"></div>
+
+    <script>
+        let timeout;
+
+        function resetTimer() {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                window.location.href = '/logout';
+            }, 15 * 60 * 1000); // 15 mins
+        }
+
+        ['click', 'keypress', 'scroll'].forEach(event => {
+            document.addEventListener(event, resetTimer);
+        });
+
+        resetTimer();
+
+        window.toggleMenu = function () {
+            document.getElementById('nav-menu').classList.toggle('show');
+        };
+
+        document.querySelectorAll('#nav-menu a').forEach(link => {
+            link.addEventListener('click', () => {
+                document.getElementById('nav-menu').classList.remove('show');
+            });
+        });
+    </script>
+
+    <script>
+        function toggleSettingsMenu(event) {
+            event.preventDefault();
+
+            const menu = document.getElementById('settings-menu');
+            menu.classList.toggle('show');
+        }
+
+        // Close when clicking outside
+        document.addEventListener('click', function (e) {
+            const menu = document.getElementById('settings-menu');
+            const isClickInside = e.target.closest('.dropdown');
+
+            if (!isClickInside && menu) {
+                menu.classList.remove('show');
+            }
+        });
+    </script>
+
+    <script>
+        document.body.addEventListener('htmx:afterRequest', function (evt) {
+            // Only act for clicks inside dropdown
+            if (evt.target.closest('.dropdown-menu')) {
+                const menu = document.getElementById('settings-menu');
+                if (menu) menu.classList.remove('show');
+            }
+        });
+    </script>
+
+    <!--Updating Currency dropdown on Add account modal -->
+    <script>
+        document.addEventListener('change', function (e) {
+
+            if (e.target.id === 'parent_id') {
+
+                const selectedOption = e.target.options[e.target.selectedIndex];
+                const subtype = selectedOption?.dataset?.subtype;
+
+                const currencyField = document.getElementById('currency_code');
+                if (!currencyField) return;
+
+                if (subtype === 'Bank' || subtype === 'Cash') {
+                    currencyField.disabled = false;
+                } else {
+                    currencyField.disabled = true;
+                    currencyField.value = '';
+                }
+            }
+
+        });
+    </script>
+
+    <!-- Delete Modal popup -->
+    <script>
+        function openDeleteModal(id, code, name) {
+            const modal = document.getElementById('modal');
+
+            modal.innerHTML = `
+    <div class="modal-overlay" onclick="closeModal()">
+      <div class="modal-box" onclick="event.stopPropagation()">
+
+        <h3>Delete Account</h3>
+
+        <p>Are you sure you want to delete this account?</p>
+
+        <div class="account-preview">
+          <strong>${code}</strong>
+          <span>${name}</span>
+        </div>
+
+        <p class="warning-text">
+          This action cannot be undone.
+        </p>
+
+        <div class="modal-actions">
+          <button onclick="closeModal()">Cancel</button>
+
+          <button 
+            class="danger"
+            hx-delete="/settings/coa/${id}"
+            hx-target="#main-content"
+            hx-swap="innerHTML"
+            hx-on="htmx:beforeRequest: closeModal(); this.disabled=true;">
+            Delete
+          </button>
+        </div>
+
+      </div>
+    </div>
+  `;
+
+            htmx.process(document.body);
+        }
+
+        function closeModal() {
+            document.getElementById('modal').innerHTML = '';
+        }
+    </script>
+
+    <script>
+        function enableSaveOnChange(form) {
+
+            const saveBtn = form.querySelector('#saveBtn');
+
+            function getFormState() {
+                const data = {};
+
+                form.querySelectorAll('input, select, textarea').forEach(el => {
+                    if (!el.name) return;
+
+                    if (el.type === 'checkbox') {
+                        data[el.name] = el.checked;
+                    } else {
+                        data[el.name] = el.value;
+                    }
+                });
+
+                return data;
+            }
+
+            const initialState = getFormState();
+
+            function hasChanged() {
+                const currentState = getFormState();
+                console.log("Current State:", currentState);
+                return Object.keys(initialState).some(key =>
+                    initialState[key] !== currentState[key]
+                );
+            }
+
+            function isFormValid() {
+                const currency = form.querySelector('[name="currency_code"]');
+
+                if (currency && !currency.disabled) {
+                    return currency.value !== '';
+                }
+
+                return true;
+            }
+
+            function updateButton() {
+                saveBtn.disabled = !(hasChanged() && isFormValid());
+            }
+
+            form.addEventListener('input', updateButton);
+            form.addEventListener('change', updateButton);
+
+            updateButton();
+        }
+    </script>
+
+    <script>
+        document.body.addEventListener('htmx:afterSwap', function (e) {
+
+            // 🔥 If anything inside modal changes
+            if (e.target.closest('#modal')) {
+                const form = document.querySelector('#modal form');
+
+                if (form) {
+                    enableSaveOnChange(form);
+                }
+            }
+
+        });
+    </script>
+
+    <script>
+        function disableSave(form) {
+            const btn = form.querySelector('#saveBtn');
+            if (btn) {
+                btn.disabled = true;
+                //btn.innerText = 'Saving...'; // optional UX
+            }
+        }
+    </script>
+
+    <script>
+
+        document.body.addEventListener(
+            'htmx:responseError',
+            function (e) {
+
+                // only for 403
+                if (e.detail.xhr.status === 403) {
+
+                    const modal =
+                        document.getElementById('modal');
+
+                    if (modal) {
+
+                        // show forbidden immediately
+                        modal.innerHTML = `
+                    <div class="modal-overlay">
+                        <div class="modal-box">
+
+                            <h3>Forbidden</h3>
+
+                            <p>
+                                You do not have permission
+                                to perform this action.
+                            </p>
+
+                        </div>
+                    </div>
+                `;
+
+                        // close after 2 sec
+                        setTimeout(() => {
+                            modal.innerHTML = '';
+                        }, 2000);
+                    }
+                }
+
+            }
+        );
+
+    </script>
+
+</body>
+
+</html>

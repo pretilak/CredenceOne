@@ -1,0 +1,61 @@
+<%- include("../../partials/header") %>
+
+<h2>Sign Up</h2>
+
+<form action="/signUp" method="POST">
+    <label for="company_name">Company Name</label>
+    <input type="text" id="company_name" name="company_name">
+    <span id="company_status"></span>
+
+    <label for="country_id">Country Id</label>
+    <input type="text" id="country_id" name="country_id">
+
+    <label for="base_currency">Base Currency</label>
+    <input type="text" id="base_currency" name="base_currency">
+
+    <label for="financial_year_start">Financial Year Start</label>
+    <input type="date" id="financial_year_start" name="financial_year_start">
+
+    <label for="email">Email</label>
+    <input type="text" id="email" name="email">
+
+    <label for="password">password</label>
+    <input type="text" id="password" name="password">
+
+    <button type="submit">Submit</button>
+</form>
+
+
+<script>
+const companyName = document.getElementById("company_name");
+const status = document.getElementById("company_status");
+
+let timeout;
+
+companyName.addEventListener("input", () => {
+    clearTimeout(timeout);
+
+    const name = companyName.value.trim();
+
+    if (!name) {
+        status.textContent = "";
+        return;
+    }
+
+    // debounce (wait before calling API)
+    timeout = setTimeout(async () => {
+        const res = await fetch(`/api/check-company?name=${encodeURIComponent(name)}`);
+        const data = await res.json();
+
+        if (data.exists) {
+            status.textContent = "❌ Company already exists";
+            status.style.color = "red";
+        } else {
+            status.textContent = "✅ Available";
+            status.style.color = "green";
+        }
+    }, 400);
+});
+</script>
+
+ <%- include("../../partials/footer") %>

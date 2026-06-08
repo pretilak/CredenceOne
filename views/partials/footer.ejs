@@ -1,0 +1,13 @@
+<p>© 2026 MyApp. All rights reserved.</p>
+<script>
+document.body.addEventListener('htmx:afterSwap', function (evt) {
+  const modal = document.getElementById('modal');
+
+  if (!modal) return;
+
+  // Only close modal if main content was updated
+  if (evt.detail.target && evt.detail.target.id === 'main-content') {
+    modal.innerHTML = '';
+  }
+});
+</script>

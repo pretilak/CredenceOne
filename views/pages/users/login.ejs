@@ -1,0 +1,14 @@
+<h2>Login</h2>
+
+<form method="POST" action="/login">
+    <label for="email">Email</label>
+    <input type="text" id="email" name="email">
+
+    <label for="password">Password</label>
+    <input type="text" id="password" name="password">
+
+    <input type="hidden" name="redirect" value="<%= /*redirect */ %>">
+
+    <button type="submit">Login</button>
+</form>
+

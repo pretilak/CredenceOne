@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>
+        <%= title || "CredenceOne" %>
+    </title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+</head>
+
+<body>
+
+    <!-- Inside your body structure -->
+    <div class="container">
+        <div class="logo">
+            <a href="/" class="logo-link">
+                CadenceOne
+            </a>
+        </div>
+        <div class="nav">
+            <ul id="nav-menu">
+                <% if (permissions.includes('dashboard.view')) { %>
+                    <li>
+                        <a href="/dashboard" class="<%= activePage === 'dashboard' ? 'active' : '' %>"
+                            hx-get="/dashboard" hx-target="#main-content" hx-swap="innerHTML" hx-push-url="true">
+                            Dashboard
+                        </a>
+                    </li>
+                    <% } %>
+
+                        <% if (permissions.includes('transactions.view')) { %>
+                            <li>
+                                <a href="/transactions" class="<%= activePage === 'transactions' ? 'active' : '' %>">
+                                    Transactions
+                                </a>
+                            </li>
+                            <% } %>
+
+                                <% if (permissions.includes('sales.view')) { %>
+                                    <li>
+                                        <a href="/sales" class="<%= activePage === 'sales' ? 'active' : '' %>">
+                                            Sales
+                                        </a>
+                                    </li>
+                                    <% } %>
+
+                                        <% if (permissions.includes('purchases.view')) { %>
+                                            <li>
+                                                <a href="/purchases"
+                                                    class="<%= activePage === 'purchases' ? 'active' : '' %>">
+                                                    Purchases
+                                                </a>
+                                            </li>
+                                            <% } %>
+
+                                                <% if (permissions.includes('settings.view') ||
+                                                    permissions.includes('coa.view')) { %>
+                                                    <li class="dropdown">
+                                                        <a href="javascript:void(0);"
+                                                            onclick="toggleSettingsMenu(event)"
+                                                            class="<%= ['settings','coa'].includes(activePage) ? 'active' : '' %>">
+                                                            Settings ▾
+                                                        </a>
+                                                        <ul class="dropdown-menu" id="settings-menu">
+                                                            <% if (permissions.includes('coa.view')) { %>
+                                                                <li>
+                                                                    <a href="/settings/coa"
+                                                                        class="<%= activePage === 'coa' ? 'active' : '' %>"
+                                                                        hx-get="/settings/coa" hx-target="#main-content"
+                                                                        hx-swap="innerHTML" hx-push-url="true">
+                                                                        Chart of Accounts
+                                                                    </a>
+                                                                </li>
+                                                                <% } %>
+                                                                    <% if (permissions.includes('entities.view')) { %>
+                                                                        <li>
+                                                                            <a href="/settings/entities"
+                                                                                class="<%= activePage === 'entities' ? 'active' : '' %>"
+                                                                                hx-get="/settings/entities"
+                                                                                hx-target="#main-content"
+                                                                                hx-swap="innerHTML" hx-push-url="true">
+                                                                                Entities
+                                                                            </a>
+                                                                        </li>
+                                                                        <% } %>
+                                                        </ul>
+                                                    </li>
+                                                    <% } %>
+
+            </ul>
+
+        </div>
+        <div class="auth">
+            <% if (user) { %>
+
+                Hi, <%= user.displayName %> |
+
+                    <a href="/logout">
+                        Logout
+                    </a>
+
+                    <% } else { %>
+
+                        <a href="/login" hx-get="/login" hx-target="#main-content" hx-swap="innerHTML"
+                            hx-push-url="true">
+
+                            Login
+                        </a>
+
+                        <% } %>
+        </div>
+
+        <!-- THIS IS YOUR BOUNDED MIDDLE ROW -->
+        <main id="main-content">
+            <%- body %>
+        </main>
+
+        <footer class="footer">
+            &copy; 2026 MyApp. All rights reserved.
+        </footer>
+    </div>
+    <div id="modal"></div>
+</body>
+
+</html>
+
+<style>
+    /* Sets the universal font family, sizing, and anti-aliasing defaults */
+    * {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        box-sizing: border-box;
+        /* Fixes padding layout math bugs globally */
+        -webkit-font-smoothing: antialiased;
+        /* Makes fonts look sharper on Mac/iOS */
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Fallback protection for the primary document body */
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        color: #1e293b;
+        /* Clean, professional dark charcoal for all body text */
+    }
+
+    /* 1. Global Reset to prevent body pushing grid down */
+    html,
+    body {
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        overflow: hidden;
+        /* Destroys global page-level scrolling */
+    }
+
+    /* 2. Your Layout Grid Setup */
+    .container {
+        display: grid;
+        grid-template-columns: repeat(12, [col-start] 1fr);
+        /* Row 1: Navbar components (80px) 
+     Row 2: Bounded Main Space 
+     Row 3: Footer (50px) */
+        grid-template-rows: 80px minmax(0, 1fr) 50px;
+        height: 100vh;
+        gap: 5px;
+        box-sizing: border-box;
+    }
+
+    /* 1. REMOVE general container padding so the grid spans full width */
+    .app-navbar {
+        grid-row: 1;
+        grid-column: span 12;
+        background-color: #ffffff;
+        border-bottom: 1px solid #e2e8f0;
+        height: 100%;
+        padding: 0;
+        /* Changed from 0 24px to 0 to prevent double-indentation */
+        box-sizing: border-box;
+        display: grid;
+        grid-template-columns: repeat(12, [col-start] 1fr);
+        gap: 5px;
+        align-items: center;
+    }
+
+    /* 2. ALIGN LOGO: Matches left padding of main content */
+    .logo {
+        grid-column: span 2;
+        display: flex;
+        align-items: center;
+        padding-left: 20px;
+        /* Aligns left boundary precisely with your H1 title text */
+        box-sizing: border-box;
+    }
+
+    .logo-link {
+        color: #1e293b;
+        font-weight: 700;
+        text-decoration: none;
+        font-family: sans-serif;
+        font-size: 18px;
+    }
+
+    /* 3. NAV: Spans exactly 8 columns */
+    .nav {
+        grid-column: span 8;
+        display: flex;
+        align-items: stretch;
+        height: 100%;
+    }
+
+    #nav-menu {
+        display: flex;
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+        height: 100%;
+    }
+
+    #nav-menu li {
+        display: flex;
+        align-items: center;
+        height: 100%;
+    }
+
+    #nav-menu a {
+        text-decoration: none;
+        color: #64748b;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-size: 14px;
+        font-weight: 500;
+        padding: 0 20px;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        position: relative;
+        transition: all 0.15s ease-in-out;
+    }
+
+    #nav-menu a:hover {
+        color: #0f172a;
+        background-color: #f8fafc;
+    }
+
+    #nav-menu a.active {
+        color: #007bff;
+        font-weight: 600;
+    }
+
+
+
+    /* 3. ALIGN AUTH: Matches right padding of main content */
+    .auth {
+        grid-column: span 2;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        height: 100%;
+        padding-right: 20px;
+        /* Aligns right edge perfectly with table box border edge */
+        box-sizing: border-box;
+
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-size: 14px;
+        color: #334155;
+        font-weight: 500;
+    }
+
+    .auth a {
+        text-decoration: none;
+        color: #ef4444;
+        font-weight: 600;
+        margin-left: 12px;
+        padding: 6px 12px;
+        border-radius: 4px;
+        transition: all 0.15s ease-in-out;
+    }
+
+    .auth a:hover {
+        background-color: #fef2f2;
+        color: #dc2626;
+    }
+
+    /* 3. Assign <main> to Row 2 and enforce a vertical Flex container */
+    #main-content {
+        grid-row: 2;
+        grid-column: span 12;
+
+        display: flex;
+        flex-direction: column;
+        /* Stacks your title text and table container vertically */
+        height: 100%;
+        /* Locks into Row 2 space precisely */
+        overflow: hidden;
+        /* Dictates strict container size boundaries */
+        padding: 10px;
+        /* Optional breathing room inside main view */
+        box-sizing: border-box;
+    }
+
+    /* 4. The Table Container grows into the leftover space under the title */
+    .table-container {
+        flex: 1;
+        /* Consumes remaining available height down to the pixel */
+        min-height: 0;
+        /* CRITICAL: Enforces internal scrolling over expansion */
+        overflow-y: auto;
+        /* Activates the clean single vertical scrollbar */
+        width: 100%;
+        border: 1px solid #ccc;
+    }
+
+    /* Row 3 Placement */
+    .footer {
+        grid-row: 3;
+        grid-column: span 12;
+    }
+
+    /* Settings menu dropdown */
+    .dropdown {
+        position: relative;
+        display: inline-block;
+    }
+
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        background: white;
+        min-width: 180px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+    }
+
+    .dropdown-content a {
+        display: block;
+        padding: 10px;
+        text-decoration: none;
+        color: black;
+    }
+
+    .dropdown-content a:hover {
+        background: #f5f5f5;
+    }
+
+    .dropdown-menu {
+        display: none !important;
+        position: absolute;
+        z-index: 9999;
+        top: 100%;
+        left: 0;
+
+        width: auto;
+        /* ✅ don't stretch */
+        min-width: unset;
+        /* remove inherited width */
+        white-space: nowrap;
+        /* keep text tight */
+
+        background: white;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        padding: 0;
+    }
+
+    .dropdown-menu.show {
+        display: block !important;
+    }
+
+    /* ===== Modal Overlay ===== */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.4);
+
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        z-index: 9999;
+    }
+
+    /* ===== Modal Box ===== */
+    .modal-box {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+
+        width: 400px;
+        max-width: 90%;
+    }
+</style>
+
+
+<script>
+    let timeout;
+
+    function resetTimer() {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            window.location.href = '/logout';
+        }, 15 * 60 * 1000); // 15 mins
+    }
+
+    ['click', 'keypress', 'scroll'].forEach(event => {
+        document.addEventListener(event, resetTimer);
+    });
+
+    resetTimer();
+
+    window.toggleMenu = function () {
+        document.getElementById('nav-menu').classList.toggle('show');
+    };
+
+    document.querySelectorAll('#nav-menu a').forEach(link => {
+        link.addEventListener('click', () => {
+            document.getElementById('nav-menu').classList.remove('show');
+        });
+    });
+</script>
+
+<script>
+    function toggleSettingsMenu(event) {
+        event.preventDefault();
+
+        const menu = document.getElementById('settings-menu');
+        menu.classList.toggle('show');
+    }
+
+    // Close when clicking outside
+    document.addEventListener('click', function (e) {
+        const menu = document.getElementById('settings-menu');
+        const isClickInside = e.target.closest('.dropdown');
+
+        if (!isClickInside && menu) {
+            menu.classList.remove('show');
+        }
+    });
+</script>
+
+<script>
+    document.body.addEventListener('htmx:afterRequest', function (evt) {
+        // Only act for clicks inside dropdown
+        if (evt.target.closest('.dropdown-menu')) {
+            const menu = document.getElementById('settings-menu');
+            if (menu) menu.classList.remove('show');
+        }
+    });
+</script>
+
+<!--Updating Currency dropdown on Add account modal -->
+<script>
+    document.addEventListener('change', function (e) {
+
+        if (e.target.id === 'parent_id') {
+
+            const selectedOption = e.target.options[e.target.selectedIndex];
+            const subtype = selectedOption?.dataset?.subtype;
+
+            const currencyField = document.getElementById('currency_code');
+            if (!currencyField) return;
+
+            if (subtype === 'Bank' || subtype === 'Cash') {
+                currencyField.disabled = false;
+            } else {
+                currencyField.disabled = true;
+                currencyField.value = '';
+            }
+        }
+
+    });
+</script>
+
+<script>
+    function openDeleteModal(
+        module,
+        id,
+        code,
+        name
+    ) {
+
+        let title;
+        let deleteUrl;
+        let entityType = code;
+        if (code == "both") {entityType = "customer/supplier"};
+
+        switch (module) {
+
+            case 'coa':
+                title = 'Delete Account';
+                deleteUrl =`/settings/coa/${id}`;
+                break;
+
+            case 'entity':
+                title = 'Delete Entity';
+                deleteUrl = `/settings/entities/${id}`;
+                break;
+
+            case 'user':
+                title = 'Delete User';
+                deleteUrl = `/settings/users/${id}`;
+                break;
+
+            case 'contact':
+                title = 'Delete Contact';
+                deleteUrl = `/settings/contacts/${id}`;
+                break;
+
+            default:
+
+                title = 'Delete Record';
+                deleteUrl = '#';
+        }
+
+        const modal =
+            document.getElementById(
+                'modal'
+            );
+
+        modal.innerHTML = `
+        <div class="modal-overlay"
+             onclick="closeModal()">
+
+            <div class="modal-box"
+                 onclick="event.stopPropagation()">
+
+                <h3>${title}</h3>
+
+                <p>
+                    Are you sure you want to delete this record?
+                </p>
+
+                <div class="account-preview">
+                    <strong>${entityType}: ${name}</strong>
+                </div>
+
+                <p class="warning-text">
+                    This action cannot be undone.
+                </p>
+
+                <div class="modal-actions">
+
+                    <button
+                        onclick="closeModal()">
+                        Cancel
+                    </button>
+
+                    <button
+                        class="danger"
+                        hx-delete="${deleteUrl}"
+                        hx-target="#main-content"
+                        hx-swap="innerHTML"
+                        hx-on="
+                            htmx:beforeRequest:
+                            closeModal();
+                            this.disabled=true;
+                        ">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+        htmx.process(document.body);
+    }
+</script>
+
+<!-- Delete Modal popup -->
+<!-- <script>
+    function openDeleteModal(id, code, name) {
+        const modal = document.getElementById('modal');
+
+        modal.innerHTML = `
+    <div class="modal-overlay" onclick="closeModal()">
+      <div class="modal-box" onclick="event.stopPropagation()">
+
+        <h3>Delete Account</h3>
+
+        <p>Are you sure you want to delete this account?</p>
+
+        <div class="account-preview">
+          <strong>${code}</strong>
+          <span>${name}</span>
+        </div>
+
+        <p class="warning-text">
+          This action cannot be undone.
+        </p>
+
+        <div class="modal-actions">
+          <button onclick="closeModal()">Cancel</button>
+
+          <button 
+            class="danger"
+            hx-delete="/settings/coa/${id}"
+            hx-target="#main-content"
+            hx-swap="innerHTML"
+            hx-on="htmx:beforeRequest: closeModal(); this.disabled=true;">
+            Delete
+          </button>
+        </div>
+
+      </div>
+    </div>
+  `;
+
+        htmx.process(document.body);
+    }
+
+    function closeModal() {
+        document.getElementById('modal').innerHTML = '';
+    }
+</script>
+
+
+
+<script>
+    document.body.addEventListener('htmx:afterSwap', function (e) {
+
+        // 🔥 If anything inside modal changes
+        if (e.target.closest('#modal')) {
+            const form = document.querySelector('#modal form');
+
+            if (form) {
+                enableSaveOnChange(form);
+            }
+        }
+
+    });
+</script>
+ -->
+
+<script>
+    function disableSave(form) {
+        const btn = form.querySelector('#saveBtn');
+        if (btn) {
+            btn.disabled = true;
+            //btn.innerText = 'Saving...'; // optional UX
+        }
+    }
+</script>
+
+<script>
+
+    document.body.addEventListener(
+        'htmx:responseError',
+        function (e) {
+
+            // only for 403
+            if (e.detail.xhr.status === 403) {
+
+                const modal =
+                    document.getElementById('modal');
+
+                if (modal) {
+
+                    // show forbidden immediately
+                    modal.innerHTML = `
+                    <div class="modal-overlay">
+                        <div class="modal-box">
+
+                            <h3>Forbidden</h3>
+
+                            <p>
+                                You do not have permission
+                                to perform this action.
+                            </p>
+
+                        </div>
+                    </div>
+                `;
+
+                    // close after 2 sec
+                    setTimeout(() => {
+                        modal.innerHTML = '';
+                    }, 2000);
+                }
+            }
+
+        }
+    );
+
+</script>
+
+<script>
+    // Clear modal after successful HTMX requests that target main-content
+    document.body.addEventListener('htmx:afterSwap', function (e) {
+        // If the swap target was main-content, clear any open modal
+        if (e.target.id === 'main-content') {
+            const modal = document.getElementById('modal');
+            if (modal && modal.innerHTML.trim() !== '') {
+                modal.innerHTML = '';
+            }
+        }
+    });
+</script>
+
+<script>
+
+    function refreshActiveMenu() {
+
+        document
+            .querySelectorAll('#nav-menu a')
+            .forEach(
+                a =>
+                    a.classList.remove(
+                        'active'
+                    )
+            );
+
+        const path =
+            window.location.pathname;
+
+        if (path === '/') {
+            return;
+        }
+
+
+        document
+            .querySelectorAll('#nav-menu a')
+            .forEach(link => {
+
+                const href =
+                    link.getAttribute(
+                        'href'
+                    );
+
+                if (!href)
+                    return;
+
+                // Exact match
+                if (
+                    href === path
+                ) {
+
+                    link.classList.add(
+                        'active'
+                    );
+
+                }
+
+                // Settings submenu
+                if (
+
+                    href ===
+                    'javascript:void(0);'
+
+                    &&
+
+                    path.startsWith(
+                        '/settings'
+                    )
+
+                ) {
+
+                    link.classList.add(
+                        'active'
+                    );
+
+                }
+
+            });
+
+    }
+
+    document.body.addEventListener(
+        'htmx:afterSwap',
+        function (e) {
+
+            if (
+                e.target.id ===
+                'main-content'
+            ) {
+
+                refreshActiveMenu();
+
+            }
+
+        }
+    );
+
+
+    // Initial page load
+    refreshActiveMenu();
+
+</script>
+
+<script>
+    function scrollToUpdatedRow() {
+
+        const row =
+            document.querySelector('.updated-row');
+
+        if (!row) return;
+
+        row.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+        });
+
+    }
+</script>
+
+<script>
+    function closeModal() {
+        document.getElementById('modal').innerHTML = '';
+    }
+</script>
+
+<script>
+    function enableSaveOnChange(form) {
+
+        const saveBtn = form.querySelector('#saveBtn');
+
+        function getFormState() {
+            const data = {};
+
+            form.querySelectorAll('input, select, textarea').forEach(el => {
+                if (!el.name) return;
+
+                if (el.type === 'checkbox') {
+                    data[el.name] = el.checked;
+                } else {
+                    data[el.name] = el.value;
+                }
+            });
+
+            return data;
+        }
+
+        const initialState = getFormState();
+
+        function hasChanged() {
+            const currentState = getFormState();
+            console.log("Current State:", currentState);
+            return Object.keys(initialState).some(key =>
+                initialState[key] !== currentState[key]
+            );
+        }
+
+        function isFormValid() {
+
+            // Validate required fields first
+            if (!form.checkValidity()) {
+                return false;
+            }
+
+            // Additional dynamic validation
+            const currency =
+                form.querySelector('[name="currency_code"]');
+
+            if (
+                currency &&
+                !currency.disabled &&
+                !currency.value
+            ) {
+                return false;
+            }
+
+            return true;
+        }
+
+        function updateButton() {
+            saveBtn.disabled = !(hasChanged() && isFormValid());
+        }
+
+        form.addEventListener('input', updateButton);
+        form.addEventListener('change', updateButton);
+
+        updateButton();
+    }
+</script>

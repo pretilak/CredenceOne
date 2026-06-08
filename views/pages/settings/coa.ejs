@@ -1,0 +1,189 @@
+<% function renderAccounts(parentId, level=0) { let rows='' ; accounts .filter(acc=> acc.parent_id === parentId)
+    .forEach(acc => {
+
+    //const disableDelete = acc.is_used || acc.has_children;
+    const disableEdit = acc.is_system || !permissions.includes('coa.edit');
+    const disableDelete = acc.is_system || acc.is_used || acc.has_children || !permissions.includes('coa.delete');
+
+    rows += `
+    <tr id="account-${acc.id}" class="${
+        updatedId == acc.id
+            ? 'updated-row'
+            : ''
+    }">
+        <td>${acc.acc_code}</td>
+        <td style="padding-left:${level * 24}px">
+            ${acc.acc_name}
+        </td>
+        <td>${acc.account_type}</td>
+        <td>${acc.is_active ? 'Yes' : 'No'}</td>
+        <td>
+
+            <button class="btn-secondary" hx-get="/settings/coa/${acc.id}/edit" hx-target="#modal" hx-swap="innerHTML" ${(disableEdit)
+                ? 'disabled' : '' } title="${!permissions.includes('coa.edit')
+                ? 'No permission' : acc.is_system
+                ? 'This is a system account' : ''
+            }">
+                Edit
+            </button>
+
+            <button class="btn-secondary" onclick="openDeleteModal('coa', ${acc.id}, '${acc.acc_code}','${acc.acc_name.replace(/'/g, " \\'")}'
+                )" ${disableDelete ? 'disabled' : '' } title="${
+                        !permissions.includes('coa.delete') ? 'No permission' : acc.is_system
+                        ? 'This is a system account' : acc.is_used
+                            ? 'Account is used' : acc.has_children
+                                ? 'Has child accounts' : ''
+                }">
+                Delete
+            </button>
+
+        </td>
+    </tr>
+    `;
+
+    rows += renderAccounts(acc.id, level + 1);
+    });
+
+    return rows;
+    } %>
+
+
+
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr class="action-row">
+                    <th colspan="5">
+                        <!-- CRITICAL CHANGE: Wrapped elements inside a flex box layout wrapper -->
+                        <div class="action-row-content">
+                            <span class="title">Chart of Accounts</span>
+
+                            <span class="actions">
+                                <% if (permissions.includes('coa.create')) { %>
+                                    <button class="btn-primary" hx-get="/settings/coa/add" hx-target="#modal"
+                                        hx-swap="innerHTML">
+                                        +Add
+                                    </button>
+                                    <% } %>
+                            </span>
+                        </div>
+                    </th>
+                </tr>
+                <tr class="header-row">
+                    <th>Code</th>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Active</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <%- renderAccounts(null) %>
+            </tbody>
+        </table>
+    </div>
+
+    <style>
+        /* 1. Turn the cell wrapper into a split layout row */
+        .action-row-content {
+            display: flex;
+            justify-content: space-between;
+            /* Flings the title to the left, actions to the right */
+            align-items: center;
+            /* Centers both text items vertically */
+            width: 100%;
+        }
+
+        /* 2. Format the Row Text Titles to look bold and distinct */
+        .action-row-content .title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        /* 3. Style your primary button to match the modern design system */
+        .btn-primary {
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: background-color 0.15s ease-in-out;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+            /* Darker blue shade on mouse hover interaction */
+        }
+
+        .btn-secondary {
+            background-color: #f8fafc;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease-in-out;
+        }
+
+        .btn-secondary:hover {
+            background-color: #e2e8f0;
+            color: #0f172a;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-family: sans-serif;
+        }
+
+        thead {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        .action-row th {
+            background-color: #f1f1f1;
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .header-row th {
+            background-color: #333;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        table tbody tr {
+            transition:
+                background-color 0.15s ease;
+        }
+
+        table tbody tr:hover td {
+            background-color:
+                #b5d5f5;
+        }
+    </style>
+
+    <script>
+        setTimeout(scrollToUpdatedRow, 100);
+    </script>

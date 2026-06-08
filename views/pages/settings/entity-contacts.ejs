@@ -1,0 +1,229 @@
+<div class="table-container">
+    <table>
+
+        <thead>
+
+            <tr class="action-row">
+                <th colspan="6">
+
+                    <div class="action-row-content">
+
+                        <span class="title">
+                            Contacts - <%= entity.name %>
+                        </span>
+
+                        <span class="actions">
+
+                            <button hx-get="/settings/entities" hx-target="#main-content" hx-swap="innerHTML"
+                                hx-push-url="true" class="btn-secondary">
+
+                                ← Back
+
+                            </button>
+
+
+                            <button hx-get="/settings/entities/<%= entity.id %>/contacts/add" hx-target="#modal"
+                                hx-swap="innerHTML" class="btn-primary">
+
+                                + Add Contact
+
+                            </button>
+
+                        </span>
+
+                    </div>
+
+                </th>
+            </tr>
+
+            <tr class="header-row">
+
+                <th>Name</th>
+                <th>Designation</th>
+                <th>Email</th>
+                <th>Mobile</th>
+                <th>Primary</th>
+                <th>Action</th>
+
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+            <% contacts.forEach(contact=> { %>
+
+                <tr id="contact-<%= contact.id %>" class="<%= updatedId == contact.id ? 'updated-row' : '' %>">
+
+                    <td>
+                        <%= contact.contact_name %>
+                    </td>
+
+                    <td>
+                        <%= contact.designation || '' %>
+                    </td>
+
+                    <td>
+                        <%= contact.email || '' %>
+                    </td>
+
+                    <td>
+                        <%= contact.mobile || '' %>
+                    </td>
+
+                    <td>
+                        <%= contact.is_primary ? 'Yes' : 'No' %>
+                    </td>
+
+                    <td>
+
+                        <button class="btn-secondary" hx-get="/settings/contacts/<%= contact.id %>/edit"
+                            hx-target="#modal" hx-swap="innerHTML">
+                            Edit
+                        </button>
+
+                        <button onclick="openDeleteModal(
+                            'contact',
+                            <%= contact.id %>,
+                            '<%= contact.contact_name %>',
+                            '<%= contact.designation || "" %>'
+                            )" <%=!permissions.includes('contacts.delete') ? 'disabled' : '' %>>
+                            Delete
+                        </button>
+
+                    </td>
+
+                </tr>
+
+                <% }) %>
+
+        </tbody>
+
+    </table>
+</div>
+
+<style>
+    /* 1. Turn the cell wrapper into a split layout row */
+    .action-row-content {
+        display: flex;
+        justify-content: space-between;
+        /* Flings the title to the left, actions to the right */
+        align-items: center;
+        /* Centers both text items vertically */
+        width: 100%;
+    }
+
+    /* 2. Format the Row Text Titles to look bold and distinct */
+    .action-row-content .title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #1e293b;
+    }
+
+    /* 3. Style your primary button to match the modern design system */
+    .btn-primary {
+        background-color: #007bff;
+        color: #ffffff;
+        border: none;
+        padding: 6px 14px;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+        transition: background-color 0.15s ease-in-out;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+        /* Darker blue shade on mouse hover interaction */
+    }
+
+    .btn-secondary {
+        background-color: #f8fafc;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+        padding: 6px 14px;
+        border-radius: 4px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s ease-in-out;
+    }
+
+    .btn-secondary:hover {
+        background-color: #e2e8f0;
+        color: #0f172a;
+    }
+
+
+    table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-family: sans-serif;
+    }
+
+    thead {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+
+    .action-row th {
+        background-color: #f1f1f1;
+        padding: 10px;
+        text-align: left;
+        border-bottom: 1px solid #ccc;
+    }
+
+    .header-row th {
+        background-color: #333;
+        color: white;
+        padding: 12px;
+        text-align: left;
+    }
+
+    td {
+        padding: 12px;
+        border-bottom: 1px solid #eee;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+
+    table tbody tr {
+        transition:
+            background-color 0.15s ease;
+    }
+
+    table tbody tr:hover td {
+        background-color:
+            #b5d5f5;
+    }
+</style>
+
+<script>
+
+    setTimeout(() => {
+
+        const row =
+            document.querySelector(
+                '.updated-row'
+            );
+
+        if (row) {
+
+            row.scrollIntoView({
+
+                behavior: 'smooth',
+
+                block: 'center'
+
+            });
+
+        }
+
+    }, 100);
+
+</script>

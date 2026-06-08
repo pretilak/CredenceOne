@@ -1,0 +1,134 @@
+<div class="modal-overlay" onclick="document.getElementById('modal').innerHTML=''">
+  <div class="modal-box" onclick="event.stopPropagation()">
+
+    <h3>
+      <%= isEdit ? 'Edit Account' : 'Add Account' %>
+    </h3>
+
+    <% if (isEdit && isUsed) { %>
+      <p style="color:red;">
+        Only name can be edited (account is in use)
+      </p>
+      <% } %>
+
+        <form hx-post="<%= isEdit ? `/settings/coa/${account.id}` : '/settings/coa' %>" hx-target="#main-content"
+          hx-swap="innerHTML" 
+          hx-on="
+          htmx:beforeRequest: disableSave(this);
+          htmx:afterSwap: if(event.detail.target.id === 'main-content'){closeModal();}
+          ">
+
+          <!-- ========================= -->
+          <!-- ADD MODE -->
+          <!-- ========================= -->
+          <% if (!isEdit) { %>
+
+            <!-- Type -->
+            <div class="form-group">
+              <label>Type</label>
+              <select name="account_type" id="account_type" hx-get="/settings/coa/parents" hx-target="#parent_id"
+                hx-trigger="change" hx-on="change:
+                document.getElementById('currency_code').disabled = true;
+                document.getElementById('currency_code').value = '';
+              " required>
+                <option value="">Select Type</option>
+                <option value="Asset">Asset</option>
+                <option value="Liability">Liability</option>
+                <option value="Equity">Equity</option>
+                <option value="Revenue">Revenue</option>
+                <option value="Expense">Expense</option>
+              </select>
+            </div>
+
+            <!-- Parent -->
+            <div class="form-group">
+              <label>Parent</label>
+              <select name="parent_id" id="parent_id" hx-get="/settings/coa/next-code" hx-target="#acc_code"
+                hx-swap="outerHTML" hx-trigger="change"
+                hx-on="change: document.getElementById('acc_code').value='Calculating...'" required>
+              </select>
+            </div>
+
+            <!-- Code (auto) -->
+            <div class="form-group">
+              <label>Code</label>
+              <input id="acc_code" name="acc_code" readonly placeholder="Auto-generated" />
+            </div>
+
+            <% } else { %>
+
+              <!-- ========================= -->
+              <!-- EDIT MODE -->
+              <!-- ========================= -->
+              <div class="form-group">
+                <label>Code</label>
+                <input value="<%= account.acc_code %>" readonly>
+              </div>
+              <% } %>
+
+                <!-- ========================= -->
+                <!-- COMMON (Add + Edit) -->
+                <!-- ========================= -->
+
+                <!-- Name -->
+                <div class="form-group">
+                  <label>Name</label>
+                  <input name="acc_name" value="<%= account.acc_name || '' %>" required />
+                </div>
+
+                <!-- Currency (dynamic DB) -->
+                <div class="form-group">
+                  <label>Currency</label>
+                  <select name="currency_code" id="currency_code" <%=(!account.isCashOrBank) ? 'disabled' : '' %> >
+
+                    <option value="">Select Currency</option>
+
+                    <% currencies.forEach(c=> { %>
+                      <option value="<%= c.code %>" <%=account.currency_code===c.code ? 'selected' : '' %>>
+                        <%= c.code %> - <%= c.name %> (<%= c.symbol %>)
+                      </option>
+                      <% }) %>
+                  </select>
+                </div>
+
+                <!-- Active -->
+                <div class="checkbox-group">
+                  <input type="checkbox" name="is_active" <%=account.is_active ? 'checked' : '' %>>
+                  <label>
+                    Active
+                  </label>
+                </div>
+
+
+                <!-- Buttons -->
+                <div class="modal-actions">
+
+                  <button type="button" onclick="closeModal()">
+                    Cancel
+                  </button>
+
+                  <button type="submit" id="saveBtn" disabled>
+                    Save
+                  </button>
+                </div>
+
+<!--                 <button type="button1" onclick="document.getElementById('modal').innerHTML=''">
+                  Cancel
+                </button>
+ -->
+        </form>
+  </div>
+</div>
+
+<script>
+  console.log("Modal script loaded");
+
+  setTimeout(() => {
+    const form = document.querySelector('#modal form');
+    console.log("Form found:", form);
+
+    if (form) {
+      enableSaveOnChange(form);
+    }
+  }, 0);
+</script>

@@ -1,0 +1,18 @@
+<%- include("../../partials/header") %>
+<% account = account || {}; %>
+
+<h2><%= title %></h2>
+
+<form action="/accounts/edit" method="POST">
+    <label for="acc_code">Code</label>
+    <input type="text" id="acc_code" name="acc_code" value="<%= account.acc_code %>" <%= account.acc_code ? "disabled" : "" %>>
+    <label for="acc_name">Name</label>
+    <input type="text" id="acc_name" name="acc_name" value="<%= account.acc_name %>">
+
+    <input type="hidden" id="acc_code" name="<%= account.acc_code ? "acc_code" : "" %>" value="<%= account.acc_code %>">
+    <input type="hidden" id="newOrEdit" name="newOrEdit" value="<%= newOrEdit %>">
+
+    <button type="submit"><%= account.acc_code ? "Update" : "Add" %></button>
+</form>
+
+ <%- include("../../partials/footer") %>

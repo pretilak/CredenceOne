@@ -1,0 +1,716 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --main-font: 'Inter', system-ui, sans-serif;
+}
+
+:root {
+  --coa-header-height: 50px;
+  /* tweak once */
+}
+
+body {
+  font-family: var(--main-font);
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+.container {
+  display: grid;
+  grid-template-columns: repeat(12, [col-start] 1fr);
+  grid-template-rows: 80px minmax(0, 1fr) 50px;
+  height: 100vh;
+  gap: 5px;
+}
+
+
+/* Default (Desktop) */
+.menu-toggle {
+  display: none;
+}
+
+.nav ul {
+  display: flex;
+  list-style: none;
+  justify-content: space-evenly;
+  margin: 0;
+  padding: 0;
+}
+
+/* 📱 Mobile */
+@media (max-width: 768px) {
+
+  .menu-toggle {
+    display: block;
+    font-size: 24px;
+    background: none;
+    border: none;
+    padding: 10px;
+  }
+
+  .nav ul {
+    display: none;
+    /* hidden initially */
+    flex-direction: column;
+    position: absolute;
+    top: 80px;
+    left: 0;
+    width: 100%;
+    background: white;
+    border-top: 1px solid #ccc;
+  }
+
+  .nav ul.show {
+    display: flex;
+  }
+
+  .nav ul li {
+    padding: 15px;
+    border-bottom: 1px solid #eee;
+    text-align: center;
+  }
+}
+
+a {
+  text-decoration: none;
+}
+
+.logo {
+  grid-column: col-start / span 2;
+  grid-row: auto;
+  border: 1px solid grey;
+}
+
+.nav {
+  grid-column: col-start 3 / span 8;
+  grid-row: auto;
+  border: 1px solid grey;
+}
+
+.user {
+  grid-column: col-start 11 / span 2;
+  border: 1px solid grey;
+}
+
+.content {
+  grid-column: 1 / -1;
+  border: 1px solid grey;
+  overflow-y: hidden;
+
+}
+
+/* Apply this to the main element or div assigned to the middle grid row */
+.middle-grid-content {
+  grid-row: 2;
+  /* Adjust this to match your specific grid placement */
+  grid-column: col-start / span 12;
+
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  /* Fills the grid row exactly */
+  overflow: hidden;
+  /* Prevents this wrapper itself from expanding */
+}
+
+.footer {
+  grid-column: col-start / span 12;
+  border: 1px solid grey;
+  justify-content: center;
+  text-align: center;
+}
+
+
+/* Dashboard style */
+.dashboard-grid {
+  display: grid;
+
+  /* auto responsive columns */
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.tile {
+  background: #f5f5f5;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+
+  padding: 20px;
+  min-height: 120px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-weight: bold;
+}
+
+
+/* COA Table 
+        .coa-table {
+          width: 100%;
+          border-collapse: separate;
+
+          border-spacing: 0;
+          table-layout: fixed;
+        }*/
+
+
+.coa-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.coa-table th,
+.coa-table td {
+  padding: 10px;
+  border: 1px solid #ddd;
+  text-align: left;
+  min-width: 0;
+}
+
+.coa-header {
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 10;
+  padding: 0px 0;
+  border-bottom: 1px solid #ccc;
+}
+
+.coa-header h2 {
+  margin: 0;
+  /* 🔥 prevents jump */
+  padding: 8px 0;
+}
+
+.coa-header-bar {
+  display: flex;
+  justify-content: space-between;
+  /* 🔥 pushes button to right */
+  align-items: center;
+  padding: 8px 0;
+}
+
+.coa-header table {
+  margin-bottom: -1px;
+  /* 🔥 removes the gap */
+}
+
+.coa-header table th {
+  border-bottom: 1px solid #ddd;
+}
+
+.coa-table tbody td {
+  border-top: none;
+  /* prevents double line / gap */
+}
+
+/* Column widths */
+.coa-table th:nth-child(1),
+.coa-table td:nth-child(1) {
+  width: 100px;
+  /* Code */
+}
+
+.coa-table th:nth-child(2),
+.coa-table td:nth-child(2) {
+  width: 40%;
+  /* Name */
+}
+
+.coa-table th:nth-child(3),
+.coa-table td:nth-child(3) {
+  width: 150px;
+  /* Type */
+}
+
+.coa-table th:nth-child(4),
+.coa-table td:nth-child(4) {
+  width: 100px;
+  /* Active */
+}
+
+.coa-table th:nth-child(5),
+.coa-table td:nth-child(5) {
+  width: 120px;
+  /* Actions */
+}
+
+/* Hover effect */
+.coa-table tr:hover {
+  background: #f5f5f5;
+}
+
+/* ===== Modal Overlay ===== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.4);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  z-index: 9999;
+}
+
+/* ===== Modal Box ===== */
+.modal-box {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+
+  width: 400px;
+  max-width: 90%;
+}
+
+/* Settings menu dropdown */
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background: white;
+  min-width: 180px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.dropdown-content a {
+  display: block;
+  padding: 10px;
+  text-decoration: none;
+  color: black;
+}
+
+.dropdown-content a:hover {
+  background: #f5f5f5;
+}
+
+.dropdown-menu {
+  display: none !important;
+  position: absolute;
+  top: 100%;
+  left: 0;
+
+  width: auto;
+  /* ✅ don't stretch */
+  min-width: unset;
+  /* remove inherited width */
+  white-space: nowrap;
+  /* keep text tight */
+
+  background: white;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  padding: 0;
+}
+
+.dropdown-menu.show {
+  display: block !important;
+}
+
+.entities-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.entities-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.entities-table th,
+.entities-table td {
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+}
+
+.entities-table th {
+  background: #f5f5f5;
+}
+
+.entities-table button {
+  margin-right: 6px;
+}
+
+/* ===================================== */
+/* Modal Overlay */
+/* ===================================== */
+
+.modal-overlay {
+
+  position: fixed;
+
+  inset: 0;
+
+  background:
+    rgba(15, 23, 42, .45);
+
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+  z-index: 9999;
+}
+
+
+/* ===================================== */
+/* Modal Container */
+/* ===================================== */
+
+.modal-box {
+
+  background: white;
+  width: 800px;
+  max-width: 92vw;
+  max-height: 88vh;
+  overflow-y: auto;
+  border-radius: 10px;
+  padding: 28px;
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, .18);
+  animation:
+    modalOpen .18s ease;
+}
+
+
+@keyframes modalOpen {
+  from {
+    opacity: 0;
+    transform:
+      translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform:
+      translateY(0);
+  }
+
+}
+
+
+/* ===================================== */
+/* Title */
+/* ===================================== */
+
+.modal-box h2,
+.modal-box h3 {
+
+  margin-top: 0;
+
+  margin-bottom: 22px;
+
+  color: #0f172a;
+
+  font-size: 22px;
+
+  font-weight: 600;
+}
+
+
+/* ===================================== */
+/* Form */
+/* ===================================== */
+
+.modal-box form {
+
+  display: grid;
+
+  grid-template-columns:
+    0.9fr 1.3fr;
+
+  column-gap: 18px;
+
+  row-gap: 10px;
+
+  align-items: end;
+}
+
+/* ===================================== */
+/* Form Group */
+/* ===================================== */
+
+.form-group {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 8px;
+}
+
+
+/* ===================================== */
+/* Labels */
+/* ===================================== */
+
+.form-group label {
+
+  color: #334155;
+
+  font-size: 14px;
+
+  font-weight: 600;
+}
+
+
+/* ===================================== */
+/* Inputs */
+/* ===================================== */
+
+.form-group input,
+
+.form-group select,
+
+.form-group textarea {
+
+  width: 100%;
+
+  padding: 10px 12px;
+
+  border:
+    1px solid #cbd5e1;
+
+  border-radius: 6px;
+
+  font-size: 14px;
+
+  transition:
+    border-color .15s,
+    box-shadow .15s;
+
+  box-sizing: border-box;
+}
+
+
+.form-group input:focus,
+
+.form-group select:focus,
+
+.form-group textarea:focus {
+
+  outline: none;
+
+  border-color:
+    #007bff;
+
+  box-shadow:
+    0 0 0 3px rgba(0, 123, 255, .12);
+}
+
+
+/* ===================================== */
+/* Checkbox */
+/* ===================================== */
+
+.checkbox-group {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+}
+
+.checkbox-group input {
+
+  width: auto;
+}
+
+
+/* ===================================== */
+/* Form Actions */
+/* ===================================== */
+
+.modal-actions {
+
+  display: flex;
+
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  margin-top: 10px;
+}
+
+
+/* Cancel */
+
+.modal-actions button:first-child {
+
+  background:
+    #f1f5f9;
+
+  color:
+    #334155;
+
+  border:
+    1px solid #cbd5e1;
+}
+
+
+/* Save */
+
+.modal-actions button:last-child {
+
+  background:
+    #007bff;
+
+  color:
+    white;
+
+  border: none;
+}
+
+
+/* Shared */
+
+.modal-actions button {
+
+  min-width: 110px;
+
+  padding:
+    10px 18px;
+
+  border-radius: 6px;
+
+  cursor: pointer;
+
+  font-size: 14px;
+
+  font-weight: 600;
+}
+
+
+.modal-actions button:hover {
+
+  opacity: .95;
+}
+
+
+/* Disabled */
+
+.modal-actions button:disabled {
+
+  background:
+    #cbd5e1;
+
+  cursor:
+    not-allowed;
+
+  opacity:
+    .7;
+}
+
+input[type="email"] {
+  min-width: 0;
+}
+
+/* ===================================== */
+/* Responsive */
+/* ===================================== */
+
+@media (max-width: 640px) {
+
+  .modal-box {
+
+    width: 95vw;
+
+    padding: 20px;
+  }
+
+}
+
+/* ===================================== */
+/* For two column form layout */
+/* ===================================== */
+/* Full width rows */
+
+.form-full {
+  grid-column:
+    1 / -1;
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 34px;
+}
+
+.checkbox-group label {
+  margin: 0;
+  font-weight: 500;
+}
+
+.checkbox-group input {
+  width: auto;
+}
+
+
+/* Buttons */
+.modal-actions {
+  grid-column:
+    1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+
+/* Forwarder block */
+#forwarder-section {
+  grid-column:
+    1 / -1;
+  display: grid;
+  grid-template-columns:
+    1fr 1fr;
+  gap: 18px;
+}
+
+
+/* Mobile */
+
+@media (max-width: 720px) {
+  .modal-box form {
+    grid-template-columns:
+      1fr;
+  }
+
+  #forwarder-section {
+    grid-template-columns:
+      1fr;
+  }
+
+}
+
+.warning-text {
+
+    color: #dc2626;
+
+    font-style: italic;
+
+    font-size: 0.8rem;
+}

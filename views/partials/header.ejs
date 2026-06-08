@@ -1,0 +1,36 @@
+<header class="navbar">
+
+    <div class="nav-left">CredenceOne</div>
+    <% if (user) { %>
+        <div class="nav-center">
+            <a href="/dashboard" class="<%= activePage === 'dashboard' ? 'active' : '' %>">Dashboard</a>
+            <a href="/transactions" class="<%= activePage === 'transactions' ? 'active' : '' %>">Transactions</a>
+            <a href="/sales" class="<%= activePage === 'sales' ? 'active' : '' %>">Sales</a>
+            <a href="/purchases" class="<%= activePage === 'purchases' ? 'active' : '' %>">Purchases</a>
+            <a href="/expenses" class="<%= activePage === 'expenses' ? 'active' : '' %>">Expenses</a>
+            <a href="/reports" class="<%= activePage === 'reports' ? 'active' : '' %>">Reports</a>
+
+            <!-- Settings Dropdown -->
+            <div class="dropdown">
+                <a href="/settings" class="<%= activePage === 'settings' ? 'active' : '' %>">
+                    Settings ▾
+                </a>
+
+                <div class="dropdown-content">
+                    <a href="/settings/coa" class="<%= activePage === 'coa' ? 'active' : '' %>">
+                        Chart of Accounts
+                    </a>
+                </div>
+            </div>
+        </div>
+        <% } %>
+
+            <div class="nav-right">
+                <% if (user) { %>
+                    Hi, <%= user.displayName %> | <a href="/logout">Logout</a>
+                        <% } else { %>
+                            <a href="/login">Login</a>
+                            <% } %>
+            </div>
+
+</header>

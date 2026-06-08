@@ -1,0 +1,61 @@
+<%- include("../../partials/header") %>
+
+<h2>List of Accounts</h2>
+
+<ul>
+    <% accounts.forEach(account => { %>
+       <li>
+            <%= account.acc_code %> - <%= account.acc_name %>
+            <a href="/accounts/edit/<%= account.acc_code %>">Edit</a>
+
+            <form action="/accounts/delete/<%= account.acc_code %>"
+                  method="POST"
+                  onsubmit="return confirm('Do you really want to delete this account?')"
+                  style="display: inline;">
+                <button type="submit">Delete</button>
+            </form>
+
+            <!-- <a href="/accounts/delete/<%= account.acc_code %>">Delete</a> -->
+       </li>
+    <% }) %>
+</ul>
+
+<script>
+const token = localStorage.getItem('token');
+
+localStorage.setItem('redirectAfterLogin', window.location.pathname);
+
+if (!token) {
+    window.location.href = '/login';
+}
+
+async function loadAccounts() {
+    const res = await fetch('/api/accounts', {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    });
+
+    if (res.status === 401) {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+        return;
+    }
+
+    const accounts = await res.json();
+
+    const ul = document.querySelector('ul');
+    ul.innerHTML = '';
+
+    accounts.forEach(account => {
+        const li = document.createElement('li');
+        li.innerHTML = `${account.acc_code} - ${account.acc_name}`;
+        ul.appendChild(li);
+    });
+}
+
+loadAccounts();
+</script>
+
+<%- include("../../partials/footer") %>
+

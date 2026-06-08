@@ -1,0 +1,7 @@
+<option value="">Select Parent</option>
+
+<% parents.forEach(p => { %>
+  <option value="<%= p.id %>" data-subtype="<%= p.account_subtype %>">
+    <%= p.acc_name %>
+  </option>
+<% }) %>
