@@ -1,0 +1,374 @@
+<% function renderRoles() { let rows='' ; roles.forEach(role=> {
+
+    const disableEdit =
+    !permissions.includes('roles.edit') ||
+    role.is_system;
+
+    const disableDelete =
+    !permissions.includes('roles.delete') ||
+    role.is_system ||
+    role.has_users;
+
+    rows += `
+
+    <tr id="role-${role.id}" class="${
+            updatedId == role.id
+                ? 'updated-row'
+                : ''
+        }">
+
+        <td>
+            ${role.role_code}
+        </td>
+
+        <td>
+            ${role.role_name}
+        </td>
+
+        <td>
+            ${role.is_active ? 'Yes' : 'No'}
+        </td>
+
+        <td>
+            ${role.is_system ? 'Yes' : 'No'}
+        </td>
+
+        <td>
+
+            <button class="btn-secondary" hx-get="/settings/roles/${role.id}/edit" hx-target="#modal"
+                hx-swap="innerHTML" ${disableEdit ? 'disabled' : '' } title="${
+                        !permissions.includes('roles.edit')
+                            ? 'No permission'
+                            : role.is_system
+                                ? 'System Role'
+                                : ''
+                    }">
+
+                Edit
+
+            </button>
+
+            <button class="btn-secondary" onclick="openDeleteModal(
+                        'role',
+                        ${role.id},
+                        '${role.role_code}',
+                        '${role.role_name.replace(/'/g, '\\\'')}'
+                    )" ${disableDelete ? 'disabled' : '' } title="${
+                        !permissions.includes('roles.delete')
+                            ? 'No permission'
+                            : role.is_system
+                                ? 'System Role'
+                                : role.has_users
+                                    ? 'Role assigned to users'
+                                    : ''
+                    }">
+
+                Delete
+
+            </button>
+
+        </td>
+
+    </tr>
+
+    `;
+    });
+
+    return rows;
+
+    } %>
+
+    <div class="table-container">
+
+        <table>
+
+            <colgroup>
+
+                <col style="width: 20%">
+                <col style="width: 40%">
+                <col style="width: 10%">
+                <col style="width: 10%">
+                <col style="width: 20%">
+
+            </colgroup>
+
+            <thead>
+
+                <!-- ===================================== -->
+                <!-- Action Row -->
+                <!-- ===================================== -->
+
+                <tr class="action-row">
+
+                    <th colspan="5">
+
+                        <div class="action-row-content">
+
+                            <span class="title">
+
+                                Roles
+
+                            </span>
+
+                            <span class="actions">
+
+                                <% if (permissions.includes('roles.create')) { %>
+
+                                    <button class="btn-primary" hx-get="/settings/roles/add" hx-target="#modal"
+                                        hx-swap="innerHTML">
+
+                                        +Add
+
+                                    </button>
+
+                                    <% } %>
+
+                            </span>
+
+                        </div>
+
+                    </th>
+
+                </tr>
+
+                <!-- ===================================== -->
+                <!-- Header Row -->
+                <!-- ===================================== -->
+
+                <tr class="header-row">
+
+                    <th>Role Code</th>
+
+                    <th>Role Name</th>
+
+                    <th>Active</th>
+
+                    <th>System</th>
+
+                    <th>Action</th>
+
+                </tr>
+
+            </thead>
+
+            <!-- ========================================= -->
+            <!-- Body -->
+            <!-- ========================================= -->
+
+            <tbody>
+
+                <%- renderRoles() %>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    <script>
+
+        setTimeout(
+            scrollToUpdatedRow,
+            100
+        );
+
+    </script>
+
+        <style>
+        /* ========================================= */
+        /* Header Layout */
+        /* ========================================= */
+
+        .action-row-content {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            width: 100%;
+        }
+
+
+        /* ========================================= */
+        /* Page Title */
+        /* ========================================= */
+
+        .action-row-content .title {
+
+            font-size: 16px;
+
+            font-weight: 600;
+
+            color: #1e293b;
+        }
+
+
+        /* ========================================= */
+        /* Primary Button */
+        /* ========================================= */
+
+        .btn-primary {
+
+            background-color: #007bff;
+
+            color: #ffffff;
+
+            border: none;
+
+            padding: 6px 14px;
+
+            border-radius: 4px;
+
+            font-weight: 600;
+
+            font-size: 13px;
+
+            cursor: pointer;
+
+            transition: background-color 0.15s ease-in-out;
+        }
+
+        .btn-primary:hover {
+
+            background-color: #0056b3;
+        }
+
+        .btn-secondary {
+            background-color: #f8fafc;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease-in-out;
+        }
+
+        .btn-secondary:hover {
+            background-color: #e2e8f0;
+            color: #0f172a;
+        }
+
+        /* ========================================= */
+        /* Table */
+        /* ========================================= */
+
+        table {
+
+            width: 100%;
+
+            border-collapse: separate;
+
+            border-spacing: 0;
+
+            font-family: sans-serif;
+
+            table-layout: fixed;
+        }
+
+        table tbody tr {
+            transition:
+                background-color 0.15s ease;
+        }
+
+        table tbody tr:hover td {
+            background-color:
+                #b5d5f5;
+        }
+
+        /* ========================================= */
+        /* Sticky Header */
+        /* ========================================= */
+
+        thead {
+
+            position: sticky;
+
+            top: 0;
+
+            z-index: 2;
+        }
+
+
+        /* ========================================= */
+        /* Action Row */
+        /* ========================================= */
+
+        .action-row th {
+
+            background-color: #f1f1f1;
+
+            padding: 10px;
+
+            text-align: left;
+
+            border-bottom: 1px solid #ccc;
+        }
+
+
+        /* ========================================= */
+        /* Header Row */
+        /* ========================================= */
+
+        .header-row th {
+
+            background-color: #333;
+
+            color: white;
+
+            padding: 12px;
+
+            text-align: left;
+        }
+
+
+        /* ========================================= */
+        /* Cells */
+        /* ========================================= */
+
+        td {
+
+            padding: 12px;
+
+            border-bottom: 1px solid #eee;
+
+            overflow: hidden;
+
+            text-overflow: ellipsis;
+
+            white-space: nowrap;
+        }
+
+
+        /* ========================================= */
+        /* Zebra */
+        /* ========================================= */
+
+        tr:nth-child(even) {
+
+            background-color: #f9f9f9;
+        }
+
+
+        /* ========================================= */
+        /* Name Column Wrap */
+        /* ========================================= */
+
+        td:first-child {
+
+            white-space: normal;
+        }
+
+
+        /* ========================================= */
+        /* Action Buttons */
+        /* ========================================= */
+
+        td:last-child {
+
+            white-space: nowrap;
+        }
+    </style>

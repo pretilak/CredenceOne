@@ -85,7 +85,19 @@
                                                                                 Entities
                                                                             </a>
                                                                         </li>
-                                                                        <% } %>
+                                                                    <% } %>
+
+                                                                    <% if (permissions.includes('roles.view')) { %>
+                                                                        <li>
+                                                                            <a href="/settings/roles"
+                                                                                class="<%= activePage === 'roles' ? 'active' : '' %>"
+                                                                                hx-get="/settings/roles"
+                                                                                hx-target="#main-content"
+                                                                                hx-swap="innerHTML"  hx-push-url="true">
+                                                                                Roles
+                                                                            </a>
+                                                                        </li>
+                                                                    <% } %>
                                                         </ul>
                                                     </li>
                                                     <% } %>
@@ -484,13 +496,13 @@
         let title;
         let deleteUrl;
         let entityType = code;
-        if (code == "both") {entityType = "customer/supplier"};
+        if (code == "both") { entityType = "customer/supplier" };
 
         switch (module) {
 
             case 'coa':
                 title = 'Delete Account';
-                deleteUrl =`/settings/coa/${id}`;
+                deleteUrl = `/settings/coa/${id}`;
                 break;
 
             case 'entity':
@@ -508,8 +520,12 @@
                 deleteUrl = `/settings/contacts/${id}`;
                 break;
 
-            default:
+            case 'role':
+                title = 'Delete Role';
+                deleteUrl = `/settings/roles/${id}`;
+                break;
 
+            default:
                 title = 'Delete Record';
                 deleteUrl = '#';
         }

@@ -1064,3 +1064,370 @@ exports.deleteContact = async (req, res) => {
     }
 
 };
+
+//Roles
+exports.getRoles = async (req, res, updatedId = null) => {
+
+const currentRole =
+    req.session.user.role_code;
+
+let query = `
+    SELECT
+        r.*,
+
+        EXISTS (
+            SELECT 1
+            FROM users u
+            WHERE u.role_id = r.id
+        ) AS has_users
+
+    FROM roles r
+`;
+
+if (currentRole === 'superuser') {
+
+    query += `
+        WHERE r.role_scope = 'company'
+    `;
+
+} else if (currentRole === 'appadmin') {
+
+    // show all roles
+
+} else {
+
+    return res
+        .status(403)
+        .send('Access denied');
+
+}
+
+query += `
+    ORDER BY role_code
+`;
+
+const result = await db.query(query);
+
+    if (req.headers['hx-request']) {
+
+        return res.render(
+            'pages/settings/roles',
+            {
+                layout: false,
+                activePage: 'roles',
+                roles: result.rows,
+                updatedId
+            }
+        );
+
+    }
+
+    res.render(
+        'pages/settings/roles',
+        {
+            title: 'Roles',
+            activePage: 'roles',
+            roles: result.rows,
+            updatedId
+        }
+    );
+};
+
+exports.getAddRole = async (req, res) => {
+    res.render(
+        'partials/role-form',
+        {
+            layout: false,
+            isEdit: false,
+            role: {}
+        }
+    );
+};
+
+exports.createRole = async (req, res) => {
+
+    try {
+
+        const roleCode =
+            req.body.role_code
+                .trim()
+                .toLowerCase();
+
+        const roleName =
+            req.body.role_name
+                .trim();
+
+        const isActive =
+            req.body.is_active === 'on';
+
+        const existing =
+            await db.query(
+                `
+                SELECT id
+                FROM roles
+                WHERE LOWER(role_code) = LOWER($1)
+                `,
+                [roleCode]
+            );
+
+        if (existing.rows.length) {
+
+            return res
+                .status(400)
+                .send('Role code already exists');
+
+        }
+
+        const result =
+            await db.query(
+                `
+                INSERT INTO roles
+                (
+                    role_code,
+                    role_name,
+                    is_active,
+                    is_system
+                )
+                VALUES
+                (
+                    $1,
+                    $2,
+                    $3,
+                    false
+                )
+                RETURNING id
+                `,
+                [
+                    roleCode,
+                    roleName,
+                    isActive
+                ]
+            );
+
+        return exports.getRoles(
+            req,
+            res,
+            result.rows[0].id
+        );
+
+    } catch (err) {
+
+        console.error(err);
+
+        return res
+            .status(500)
+            .send('Error creating role');
+
+    }
+
+};
+
+exports.getEditRole = async (req, res) => {
+
+    const result =
+        await db.query(
+            `
+            SELECT *
+            FROM roles
+            WHERE id = $1
+            `,
+            [req.params.id]
+        );
+
+    if (!result.rows.length) {
+
+        return res
+            .status(404)
+            .send('Role not found');
+
+    }
+
+    if (result.rows[0].is_system) {
+
+        return res
+            .status(403)
+            .send('System roles cannot be edited');
+
+    }
+
+    res.render(
+        'partials/role-form',
+        {
+            layout: false,
+            isEdit: true,
+            role: result.rows[0]
+        }
+    );
+
+};
+
+exports.updateRole = async (req, res) => {
+
+    try {
+
+        const roleId = req.params.id;
+
+        const role = await db.query(
+            `
+            SELECT *
+            FROM roles
+            WHERE id = $1
+            `,
+            [roleId]
+        );
+
+        if (!role.rows.length) {
+
+            return res
+                .status(404)
+                .send('Role not found');
+
+        }
+
+        if (role.rows[0].is_system) {
+
+            return res
+                .status(403)
+                .send('System roles cannot be edited');
+
+        }
+
+        const roleCode =
+            req.body.role_code
+                .trim()
+                .toLowerCase();
+
+        const roleName =
+            req.body.role_name
+                .trim();
+
+        const isActive =
+            req.body.is_active === 'on';
+
+        const duplicate = await db.query(
+            `
+            SELECT id
+            FROM roles
+            WHERE LOWER(role_code) = LOWER($1)
+            AND id <> $2
+            `,
+            [
+                roleCode,
+                roleId
+            ]
+        );
+
+        if (duplicate.rows.length) {
+
+            return res
+                .status(400)
+                .send('Role code already exists');
+
+        }
+
+        await db.query(
+            `
+            UPDATE roles
+            SET
+                role_code = $1,
+                role_name = $2,
+                is_active = $3
+            WHERE id = $4
+            `,
+            [
+                roleCode,
+                roleName,
+                isActive,
+                roleId
+            ]
+        );
+
+        return exports.getRoles(
+            req,
+            res,
+            roleId
+        );
+
+    } catch (err) {
+
+        console.error(err);
+
+        return res
+            .status(500)
+            .send('Error updating role');
+
+    }
+
+};
+
+exports.deleteRole = async (req, res) => {
+
+    try {
+
+        const role = await db.query(
+            `
+            SELECT
+                r.*,
+
+                EXISTS (
+                    SELECT 1
+                    FROM users u
+                    WHERE u.role_id = r.id
+                ) AS has_users
+
+            FROM roles r
+
+            WHERE r.id = $1
+            `,
+            [req.params.id]
+        );
+
+        if (!role.rows.length) {
+
+            return res
+                .status(404)
+                .send('Role not found');
+
+        }
+
+        if (role.rows[0].is_system) {
+
+            return res
+                .status(403)
+                .send('System roles cannot be deleted');
+
+        }
+
+        if (role.rows[0].has_users) {
+
+            return res
+                .status(403)
+                .send('Role is assigned to users');
+
+        }
+
+        await db.query(
+            `
+            DELETE
+            FROM roles
+            WHERE id = $1
+            `,
+            [req.params.id]
+        );
+
+        return exports.getRoles(
+            req,
+            res
+        );
+
+    } catch (err) {
+
+        console.error(err);
+
+        return res
+            .status(500)
+            .send('Error deleting role');
+
+    }
+
+};

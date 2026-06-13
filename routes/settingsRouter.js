@@ -41,4 +41,15 @@ router.post('/settings/contacts/:id', requireAuth, requirePermission('contacts.e
 
 router.delete('/settings/contacts/:id', requireAuth, requirePermission('contacts.delete'), settingsController.deleteContact);
 
+//Roles
+router.get('/settings/roles', requirePermission('roles.view'), settingsController.getRoles);
+
+router.get('/settings/roles/add', requirePermission('roles.create'), settingsController.getAddRole);
+router.post('/settings/roles', requirePermission('roles.create'), settingsController.createRole);
+
+router.get('/settings/roles/:id/edit', requirePermission('roles.edit'), settingsController.getEditRole);
+router.post('/settings/roles/:id', requirePermission('roles.edit'), settingsController.updateRole);
+
+router.delete('/settings/roles/:id', requirePermission('roles.delete'), settingsController.deleteRole);
+
 module.exports = router;

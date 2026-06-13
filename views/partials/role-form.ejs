@@ -1,0 +1,134 @@
+<div class="modal-overlay">
+
+    <div class="modal-box">
+
+        <h2>
+
+            <%= isEdit ? 'Edit Role' : 'Add Role' %>
+
+        </h2>
+
+        <form
+
+            hx-post="<%= isEdit
+                ? `/settings/roles/${role.id}`
+                : '/settings/roles'
+            %>"
+
+            hx-target="#main-content"
+
+            hx-swap="innerHTML"
+
+            hx-on="
+                htmx:beforeRequest:
+                    disableSave(this);
+
+                htmx:afterSwap:
+                    if(event.detail.target.id === 'main-content'){
+                        closeModal();
+                    }
+            ">
+
+            <!-- ============================= -->
+            <!-- Role Code -->
+            <!-- ============================= -->
+
+            <div class="form-group">
+
+                <label>
+
+                    Role Code
+
+                </label>
+
+                <input
+                    type="text"
+                    name="role_code"
+                    value="<%= role.role_code || '' %>"
+                    required>
+
+            </div>
+
+            <!-- ============================= -->
+            <!-- Role Name -->
+            <!-- ============================= -->
+
+            <div class="form-group">
+
+                <label>
+
+                    Role Name
+
+                </label>
+
+                <input
+                    type="text"
+                    name="role_name"
+                    value="<%= role.role_name || '' %>"
+                    required>
+
+            </div>
+
+            <!-- ============================= -->
+            <!-- Active -->
+            <!-- ============================= -->
+
+            <div class="checkbox-group">
+
+                <input
+                    type="checkbox"
+                    name="is_active"
+
+                    <%= role.is_active !== false
+                        ? 'checked'
+                        : ''
+                    %>>
+
+                <label>
+
+                    Active
+
+                </label>
+
+            </div>
+
+            <!-- ============================= -->
+            <!-- Actions -->
+            <!-- ============================= -->
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    onclick="closeModal()">
+
+                    Cancel
+
+                </button>
+
+                <button
+                    type="submit"
+                    id="saveBtn"
+                    disabled>
+
+                    Save
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<script>
+
+    enableSaveOnChange(
+        document.querySelector(
+            '.modal-box form'
+        )
+    );
+
+</script>
