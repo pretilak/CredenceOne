@@ -10,6 +10,8 @@ function requirePermission(permission) {
         const permissions =
             req.session.user.permissions || [];
 
+console.log("permission:", permission, " Permissions:", permissions);
+
         if (!permissions.includes(permission)) {
 
             // =========================================

@@ -1,47 +1,50 @@
-<% function renderRoles() { let rows='' ; roles.forEach(role=> {
+<% function renderUsers() { let rows='' ; users.forEach(user=> {
 
     const disableEdit =
-    !permissions.includes('roles.edit') ||
-    role.is_system;
+    !permissions.includes('users.edit');
 
     const disableDelete =
-    !permissions.includes('roles.delete') ||
-    role.is_system ||
-    role.has_users;
+    !permissions.includes('users.delete');
 
     rows += `
 
-    <tr id="role-${role.id}" class="${
-            updatedId == role.id
+    <tr id="user-${user.id}" class="${
+            updatedId == user.id
                 ? 'updated-row'
                 : ''
         }">
 
         <td>
-            ${role.role_code}
+            ${user.name || ''}
         </td>
 
         <td>
-            ${role.role_name}
+            ${user.email}
         </td>
 
         <td>
-            ${role.is_active ? 'Yes' : 'No'}
+            ${user.company_name || ''}
         </td>
 
         <td>
-            ${role.is_system ? 'Yes' : 'No'}
+            ${user.role_name}
+        </td>
+
+        <td>
+            ${user.is_active ? 'Yes' : 'No'}
+        </td>
+
+        <td>
+            ${user.is_2fa_enabled ? 'Yes' : 'No'}
         </td>
 
         <td>
 
-            <button class="btn-secondary" hx-get="/settings/roles/${role.id}/edit" hx-target="#modal"
+            <button class="btn-secondary" hx-get="/settings/users/${user.id}/edit" hx-target="#modal"
                 hx-swap="innerHTML" ${disableEdit ? 'disabled' : '' } title="${
-                        !permissions.includes('roles.edit')
+                        !permissions.includes('users.edit')
                             ? 'No permission'
-                            : role.is_system
-                                ? 'System Role'
-                                : ''
+                            : ''
                     }">
 
                 Edit
@@ -49,18 +52,14 @@
             </button>
 
             <button class="btn-secondary" onclick="openDeleteModal(
-                        'role',
-                        ${role.id},
-                        '${role.role_code}',
-                        '${role.role_name.replace(/'/g, '\\\'')}'
+                        'user',
+                        ${user.id},
+                        '${user.role_code}',
+                        '${(user.name || user.email).replace(/'/g, '\\\'')}'
                     )" ${disableDelete ? 'disabled' : '' } title="${
-                        !permissions.includes('roles.delete')
+                        !permissions.includes('users.delete')
                             ? 'No permission'
-                            : role.is_system
-                                ? 'System Role'
-                                : role.has_users
-                                    ? 'Role assigned to users'
-                                    : ''
+                            : ''
                     }">
 
                 Delete
@@ -84,11 +83,13 @@
 
             <colgroup>
 
-                <col style="width: 20%">
-                <col style="width: 40%">
-                <col style="width: 10%">
-                <col style="width: 10%">
-                <col style="width: 20%">
+                <col style="width: 18%">
+                <col style="width: 22%">
+                <col style="width: 18%">
+                <col style="width: 16%">
+                <col style="width: 8%">
+                <col style="width: 6%">
+                <col style="width: 12%">
 
             </colgroup>
 
@@ -100,21 +101,21 @@
 
                 <tr class="action-row">
 
-                    <th colspan="5">
+                    <th colspan="7">
 
                         <div class="action-row-content">
 
                             <span class="title">
 
-                                Roles
+                                Users
 
                             </span>
 
                             <span class="actions">
 
-                                <% if (permissions.includes('roles.create')) { %>
+                                <% if (permissions.includes('users.create')) { %>
 
-                                    <button class="btn-primary" hx-get="/settings/roles/add" hx-target="#modal"
+                                    <button class="btn-primary" hx-get="/settings/users/add" hx-target="#modal"
                                         hx-swap="innerHTML">
 
                                         +Add
@@ -137,13 +138,17 @@
 
                 <tr class="header-row">
 
-                    <th>Role Code</th>
+                    <th>Name</th>
 
-                    <th>Role Name</th>
+                    <th>Email</th>
+
+                    <th>Company</th>
+
+                    <th>Role</th>
 
                     <th>Active</th>
 
-                    <th>System</th>
+                    <th>2FA</th>
 
                     <th>Action</th>
 
@@ -151,13 +156,9 @@
 
             </thead>
 
-            <!-- ========================================= -->
-            <!-- Body -->
-            <!-- ========================================= -->
-
             <tbody>
 
-                <%- renderRoles() %>
+                <%- renderUsers() %>
 
             </tbody>
 

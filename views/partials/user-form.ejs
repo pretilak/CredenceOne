@@ -1,0 +1,279 @@
+<div class="modal-overlay">
+
+    <div class="modal-box">
+
+        <h2>
+            <%= isEdit ? 'Edit User' : 'Add User' %>
+        </h2>
+
+        <form hx-post="<%= isEdit ? `/settings/users/${user.id}` : '/settings/users' %>" hx-target="#main-content"
+            hx-swap="innerHTML" hx-on="
+                htmx:beforeRequest:
+                    disableSave(this);
+
+                htmx:afterSwap:
+                    if(event.detail.target.id === 'main-content'){
+                        closeModal();
+                    }
+            ">
+
+            <!-- ============================= -->
+            <!-- Name -->
+            <!-- ============================= -->
+
+            <div class="form-group">
+
+                <label>Name</label>
+
+                <input type="text" name="name" value="<%= user.name || '' %>" required>
+
+            </div>
+
+            <!-- ============================= -->
+            <!-- Email -->
+            <!-- ============================= -->
+
+            <div class="form-group">
+
+                <label>Email</label>
+
+                <input type="email" name="email" value="<%= user.email || '' %>" required>
+
+            </div>
+
+            <!-- ============================= -->
+            <!-- Company -->
+            <!-- ============================= -->
+
+            <div class="form-group">
+
+                <label>Company</label>
+
+                <select name="company_id" required>
+
+                    <option value="">
+                        Select Company
+                    </option>
+
+                    <% companies.forEach(c=> { %>
+
+                        <option value="<%= c.id %>" <%=user.company_id==c.id ? 'selected' : '' %>>
+
+                            <%= c.name %>
+
+                        </option>
+
+                        <% }) %>
+
+                </select>
+
+            </div>
+
+            <!-- ============================= -->
+            <!-- Role -->
+            <!-- ============================= -->
+
+            <div class="form-group">
+
+                <label>Role</label>
+
+                <select name="role_id" required>
+
+                    <option value="">
+                        Select Role
+                    </option>
+
+                    <% roles.forEach(r=> { %>
+
+                        <option value="<%= r.id %>" <%=user.role_id==r.id ? 'selected' : '' %>>
+
+                            <%= r.role_name %>
+
+                        </option>
+
+                        <% }) %>
+
+                </select>
+
+            </div>
+
+            <% if (!isEdit) { %>
+
+                <!-- ============================= -->
+                <!-- Password -->
+                <!-- ============================= -->
+
+                <div class="form-group">
+
+                    <label>Password</label>
+
+                    <input type="password" id="password" name="password" required>
+
+                </div>
+
+                <!-- ============================= -->
+                <!-- Confirm Password -->
+                <!-- ============================= -->
+
+                <div class="form-group">
+
+                    <label>Confirm Password</label>
+
+                    <input type="password" id="confirmPassword" name="confirm_password" required>
+
+                </div>
+
+                <div id="passwordError" class="form-error form-full">
+                </div>
+
+                <% } %>
+
+                    <!-- ============================= -->
+                    <!-- Active -->
+                    <!-- ============================= -->
+
+                    <div class="checkbox-group">
+
+                        <input type="checkbox" name="is_active" <%=user.is_active !==false ? 'checked' : '' %>>
+
+                        <label>
+                            Active
+                        </label>
+
+                    </div>
+
+                    <!-- ============================= -->
+                    <!-- Actions -->
+                    <!-- ============================= -->
+
+                    <div class="modal-actions">
+
+                        <button type="button" onclick="closeModal()">
+
+                            Cancel
+
+                        </button>
+
+                        <button type="submit" id="saveBtn" disabled>
+
+                            Save
+
+                        </button>
+
+                    </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<script>
+
+    enableSaveOnChange(
+        document.querySelector(
+            '.modal-box form'
+        )
+    );
+
+</script>
+
+<script>
+
+(() => {
+
+    function validatePasswords() {
+
+        const password =
+            document.getElementById('password');
+
+        const confirmPassword =
+            document.getElementById('confirmPassword');
+
+        const error =
+            document.getElementById('passwordError');
+
+        const saveBtn =
+            document.getElementById('saveBtn');
+
+        if (
+            !password ||
+            !confirmPassword ||
+            !error ||
+            !saveBtn
+        ) {
+            return;
+        }
+
+        if (
+            password.value.length === 0 &&
+            confirmPassword.value.length === 0
+        ) {
+
+            error.innerText = '';
+            error.style.visibility = 'hidden';
+
+            saveBtn.disabled = true;
+
+            return;
+        }
+
+        if (
+            confirmPassword.value.length > 0 &&
+            password.value !== confirmPassword.value
+        ) {
+
+            error.innerText =
+                'Passwords do not match';
+
+            error.style.visibility =
+                'visible';
+
+            saveBtn.disabled = true;
+
+            return;
+        }
+
+        error.innerText = '';
+        error.style.visibility = 'hidden';
+
+        //saveBtn.disabled = false;
+    }
+
+    const password =
+        document.getElementById('password');
+
+    const confirmPassword =
+        document.getElementById('confirmPassword');
+
+    if (password) {
+        password.addEventListener(
+            'input',
+            validatePasswords
+        );
+    }
+
+    if (confirmPassword) {
+        confirmPassword.addEventListener(
+            'input',
+            validatePasswords
+        );
+    }
+
+})();
+
+</script>
+
+<style>
+    .form-error {
+        min-height: 18px;
+        visibility: hidden;
+        color: #dc2626;
+        font-size: 0.85rem;
+        font-style: italic;
+    }
+
+    .form-full {
+        grid-column: 1 / -1;
+    }
+</style>

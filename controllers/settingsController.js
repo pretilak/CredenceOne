@@ -1431,3 +1431,310 @@ exports.deleteRole = async (req, res) => {
     }
 
 };
+
+//Users
+exports.getUsers = async (req, res, updatedId = null) => {
+
+    const currentRole =
+        req.session.user.role_code;
+
+    const currentCompanyId =
+        req.session.user.company_id;
+
+    let query = `
+        SELECT
+            u.id,
+            u.name,
+            u.email,
+            u.company_id,
+            c.name AS company_name,
+            u.is_active,
+            u.is_2fa_enabled,
+            r.role_code,
+            r.role_name,
+            r.role_scope
+
+        FROM users u
+
+        JOIN roles r
+            ON r.id = u.role_id
+
+        LEFT JOIN companies c
+            ON c.id = u.company_id
+    `;
+
+    const params = [];
+
+    if (currentRole === 'appadmin') {
+
+        // See everything
+
+    } else if (currentRole === 'superuser') {
+
+        query += `
+            WHERE r.role_scope = 'company'
+        `;
+
+    } else if (currentRole === 'companyadmin') {
+
+        query += `
+            WHERE u.company_id = $1
+            AND r.role_code NOT IN ('companyadmin')
+        `;
+
+        params.push(currentCompanyId);
+
+    } else {
+
+        return res
+            .status(403)
+            .send('Access denied');
+
+    }
+
+    query += `
+        ORDER BY
+            c.name NULLS FIRST,
+            u.name,
+            u.email
+    `;
+
+//console.log(query);
+
+    const result =
+        await db.query(
+            query,
+            params
+        );
+
+//console.log("User:", result.rows);
+
+    if (req.headers['hx-request']) {
+
+        return res.render(
+            'pages/settings/users',
+            {
+                layout: false,
+                activePage: 'users',
+                users: result.rows,
+                updatedId
+            }
+        );
+
+    }
+
+    res.render(
+        'pages/settings/users',
+        {
+            title: 'Users',
+            activePage: 'users',
+            users: result.rows,
+            updatedId
+        }
+    );
+
+};
+
+exports.getAddUser = async (req, res) => {
+
+    const roles =
+        await db.query(`
+            SELECT
+                id,
+                role_code,
+                role_name,
+                role_scope
+            FROM roles
+            ORDER BY role_name
+        `);
+
+    const companies =
+        await db.query(`
+            SELECT
+                id,
+                name
+            FROM companies
+            ORDER BY name
+        `);
+
+    res.render(
+        'partials/user-form',
+        {
+            layout: false,
+
+            isEdit: false,
+
+            user: {},
+
+            roles: roles.rows,
+
+            companies: companies.rows
+        }
+    );
+
+};
+
+const bcrypt = require('bcrypt');
+
+exports.createUser = async (req, res) => {
+
+    try {
+
+        const {
+            name,
+            email,
+            company_id,
+            role_id,
+            password,
+            confirm_password,
+            is_active
+        } = req.body;
+
+        // ==========================
+        // Password validation
+        // ==========================
+
+        if (password !== confirm_password) {
+
+            return res
+                .status(400)
+                .send('Passwords do not match');
+
+        }
+
+        // ==========================
+        // Email uniqueness
+        // ==========================
+
+        const existingUser =
+            await db.query(
+                `
+                SELECT id
+                FROM users
+                WHERE lower(email) =
+                      lower($1)
+                `,
+                [email]
+            );
+
+        if (existingUser.rows.length) {
+
+            return res
+                .status(400)
+                .send('Email already exists');
+
+        }
+
+        // ==========================
+        // Get role
+        // ==========================
+
+        const roleResult =
+            await db.query(
+                `
+                SELECT
+                    id,
+                    role_scope
+                FROM roles
+                WHERE id = $1
+                `,
+                [role_id]
+            );
+
+        if (!roleResult.rows.length) {
+
+            return res
+                .status(400)
+                .send('Invalid role');
+
+        }
+
+        const role =
+            roleResult.rows[0];
+
+        // ==========================
+        // Company validation
+        // ==========================
+
+        let finalCompanyId = null;
+
+        if (role.role_scope === 'company') {
+
+            if (!company_id) {
+
+                return res
+                    .status(400)
+                    .send(
+                        'Company is required'
+                    );
+
+            }
+
+            finalCompanyId =
+                company_id;
+
+        }
+
+        // ==========================
+        // Password hash
+        // ==========================
+
+        const passwordHash =
+            await bcrypt.hash(
+                password,
+                10
+            );
+
+        // ==========================
+        // Insert
+        // ==========================
+
+        await db.query(
+            `
+            INSERT INTO users
+            (
+                name,
+                email,
+                company_id,
+                role_id,
+                password_hash,
+                is_active
+            )
+            VALUES
+            (
+                $1,
+                $2,
+                $3,
+                $4,
+                $5,
+                $6
+            )
+            `,
+            [
+                name,
+                email,
+                finalCompanyId,
+                role_id,
+                passwordHash,
+                is_active === 'on'
+            ]
+        );
+
+        return exports.getUsers(
+            req,
+            res
+        );
+
+    } catch (err) {
+
+        console.error(err);
+
+        return res
+            .status(500)
+            .send(
+                'Error creating user'
+            );
+
+    }
+
+};

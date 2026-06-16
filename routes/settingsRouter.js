@@ -52,4 +52,10 @@ router.post('/settings/roles/:id', requirePermission('roles.edit'), settingsCont
 
 router.delete('/settings/roles/:id', requirePermission('roles.delete'), settingsController.deleteRole);
 
+//Users
+router.get('/settings/users', requirePermission('users.view'), settingsController.getUsers);
+
+router.get('/settings/users/add', requirePermission('users.create'), settingsController.getAddUser);
+router.post('/settings/users', requirePermission('users.create'), settingsController.createUser);
+
 module.exports = router;

@@ -57,7 +57,8 @@
                                             <% } %>
 
                                                 <% if (permissions.includes('settings.view') ||
-                                                    permissions.includes('coa.view')) { %>
+                                                    permissions.includes('coa.view') ||
+                                                    permissions.includes('users.view')) { %>
                                                     <li class="dropdown">
                                                         <a href="javascript:void(0);"
                                                             onclick="toggleSettingsMenu(event)"
@@ -85,19 +86,36 @@
                                                                                 Entities
                                                                             </a>
                                                                         </li>
-                                                                    <% } %>
+                                                                        <% } %>
 
-                                                                    <% if (permissions.includes('roles.view')) { %>
-                                                                        <li>
-                                                                            <a href="/settings/roles"
-                                                                                class="<%= activePage === 'roles' ? 'active' : '' %>"
-                                                                                hx-get="/settings/roles"
-                                                                                hx-target="#main-content"
-                                                                                hx-swap="innerHTML"  hx-push-url="true">
-                                                                                Roles
-                                                                            </a>
-                                                                        </li>
-                                                                    <% } %>
+                                                                            <% if (permissions.includes('roles.view')) {
+                                                                                %>
+                                                                                <li>
+                                                                                    <a href="/settings/roles"
+                                                                                        class="<%= activePage === 'roles' ? 'active' : '' %>"
+                                                                                        hx-get="/settings/roles"
+                                                                                        hx-target="#main-content"
+                                                                                        hx-swap="innerHTML"
+                                                                                        hx-push-url="true">
+                                                                                        Roles
+                                                                                    </a>
+                                                                                </li>
+                                                                                <% } %>
+
+                                                                                    <% if
+                                                                                        (permissions.includes('users.view'))
+                                                                                        { %>
+                                                                                        <li>
+                                                                                            <a href="/settings/users"
+                                                                                                class="<%= activePage === 'users' ? 'active' : '' %>"
+                                                                                                hx-get="/settings/users"
+                                                                                                hx-target="#main-content"
+                                                                                                hx-swap="innerHTML"
+                                                                                                hx-push-url="true">
+                                                                                                Users
+                                                                                            </a>
+                                                                                        </li>
+                                                                                        <% } %>
                                                         </ul>
                                                     </li>
                                                     <% } %>
@@ -413,7 +431,7 @@
         clearTimeout(timeout);
         timeout = setTimeout(() => {
             window.location.href = '/logout';
-        }, 15 * 60 * 1000); // 15 mins
+        }, 60 * 60 * 1000); // 60 mins
     }
 
     ['click', 'keypress', 'scroll'].forEach(event => {
@@ -880,7 +898,8 @@
         }
 
         function updateButton() {
-            saveBtn.disabled = !(hasChanged() && isFormValid());
+            const allRequiredFieldsFilled = hasChanged() && isFormValid();
+            saveBtn.disabled = !allRequiredFieldsFilled || !passwordsMatch();
         }
 
         form.addEventListener('input', updateButton);
@@ -888,4 +907,24 @@
 
         updateButton();
     }
+
+    //helper function
+    function passwordsMatch() {
+
+        const password =
+            document.getElementById('password');
+
+        const confirmPassword =
+            document.getElementById('confirmPassword');
+
+        if (!password || !confirmPassword) {
+            return true;
+        }
+
+        return (
+            password.value.length > 0 &&
+            password.value === confirmPassword.value
+        );
+    }
+
 </script>
