@@ -9,6 +9,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="/css/style.css">
     <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    <script src="/js/tables.js"></script>
 </head>
 
 <body>
@@ -337,6 +338,7 @@
         /* CRITICAL: Enforces internal scrolling over expansion */
         overflow-y: auto;
         /* Activates the clean single vertical scrollbar */
+        scrollbar-gutter: stable;
         width: 100%;
         border: 1px solid #ccc;
     }
@@ -530,7 +532,7 @@
 
             case 'user':
                 title = 'Delete User';
-                deleteUrl = `/settings/users/${id}`;
+                deleteUrl = `/settings/users/${id}/toggle-status`;
                 break;
 
             case 'contact':
@@ -601,71 +603,6 @@
         htmx.process(document.body);
     }
 </script>
-
-<!-- Delete Modal popup -->
-<!-- <script>
-    function openDeleteModal(id, code, name) {
-        const modal = document.getElementById('modal');
-
-        modal.innerHTML = `
-    <div class="modal-overlay" onclick="closeModal()">
-      <div class="modal-box" onclick="event.stopPropagation()">
-
-        <h3>Delete Account</h3>
-
-        <p>Are you sure you want to delete this account?</p>
-
-        <div class="account-preview">
-          <strong>${code}</strong>
-          <span>${name}</span>
-        </div>
-
-        <p class="warning-text">
-          This action cannot be undone.
-        </p>
-
-        <div class="modal-actions">
-          <button onclick="closeModal()">Cancel</button>
-
-          <button 
-            class="danger"
-            hx-delete="/settings/coa/${id}"
-            hx-target="#main-content"
-            hx-swap="innerHTML"
-            hx-on="htmx:beforeRequest: closeModal(); this.disabled=true;">
-            Delete
-          </button>
-        </div>
-
-      </div>
-    </div>
-  `;
-
-        htmx.process(document.body);
-    }
-
-    function closeModal() {
-        document.getElementById('modal').innerHTML = '';
-    }
-</script>
-
-
-
-<script>
-    document.body.addEventListener('htmx:afterSwap', function (e) {
-
-        // 🔥 If anything inside modal changes
-        if (e.target.closest('#modal')) {
-            const form = document.querySelector('#modal form');
-
-            if (form) {
-                enableSaveOnChange(form);
-            }
-        }
-
-    });
-</script>
- -->
 
 <script>
     function disableSave(form) {
@@ -845,7 +782,7 @@
 </script>
 
 <script>
-    function enableSaveOnChange(form) {
+    function enableSaveOnChange(form, extraValidationFn =() => true) {
 
         const saveBtn = form.querySelector('#saveBtn');
 
@@ -869,7 +806,7 @@
 
         function hasChanged() {
             const currentState = getFormState();
-            console.log("Current State:", currentState);
+            //console.log("Current State:", currentState);
             return Object.keys(initialState).some(key =>
                 initialState[key] !== currentState[key]
             );
@@ -898,14 +835,17 @@
         }
 
         function updateButton() {
+            
             const allRequiredFieldsFilled = hasChanged() && isFormValid();
-            saveBtn.disabled = !allRequiredFieldsFilled || !passwordsMatch();
+            saveBtn.disabled = !allRequiredFieldsFilled || !passwordsMatch() || !extraValidationFn();
         }
 
         form.addEventListener('input', updateButton);
         form.addEventListener('change', updateButton);
 
         updateButton();
+
+        return updateButton;
     }
 
     //helper function

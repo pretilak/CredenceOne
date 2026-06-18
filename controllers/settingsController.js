@@ -1068,10 +1068,10 @@ exports.deleteContact = async (req, res) => {
 //Roles
 exports.getRoles = async (req, res, updatedId = null) => {
 
-const currentRole =
-    req.session.user.role_code;
+    const currentRole =
+        req.session.user.role_code;
 
-let query = `
+    let query = `
     SELECT
         r.*,
 
@@ -1084,29 +1084,29 @@ let query = `
     FROM roles r
 `;
 
-if (currentRole === 'superuser') {
+    if (currentRole === 'superuser') {
 
-    query += `
+        query += `
         WHERE r.role_scope = 'company'
     `;
 
-} else if (currentRole === 'appadmin') {
+    } else if (currentRole === 'appadmin') {
 
-    // show all roles
+        // show all roles
 
-} else {
+    } else {
 
-    return res
-        .status(403)
-        .send('Access denied');
+        return res
+            .status(403)
+            .send('Access denied');
 
-}
+    }
 
-query += `
+    query += `
     ORDER BY role_code
 `;
 
-const result = await db.query(query);
+    const result = await db.query(query);
 
     if (req.headers['hx-request']) {
 
@@ -1499,7 +1499,7 @@ exports.getUsers = async (req, res, updatedId = null) => {
             u.email
     `;
 
-//console.log(query);
+    //console.log(query);
 
     const result =
         await db.query(
@@ -1507,7 +1507,7 @@ exports.getUsers = async (req, res, updatedId = null) => {
             params
         );
 
-//console.log("User:", result.rows);
+    //console.log("User:", result.rows);
 
     if (req.headers['hx-request']) {
 
@@ -1736,5 +1736,265 @@ exports.createUser = async (req, res) => {
             );
 
     }
+
+};
+
+exports.getEditUser = async (req, res) => {
+
+    const userId = req.params.id;
+
+    const userResult =
+        await db.query(
+            `
+            SELECT
+                u.*,
+                r.role_scope
+            FROM users u
+            JOIN roles r
+                ON r.id = u.role_id
+            WHERE u.id = $1
+            `,
+            [userId]
+        );
+
+    if (!userResult.rows.length) {
+
+        return res
+            .status(404)
+            .send('User not found');
+
+    }
+
+    const user =
+        userResult.rows[0];
+
+    const roles =
+        await db.query(`
+            SELECT
+                id,
+                role_code,
+                role_name,
+                role_scope
+            FROM roles
+            WHERE role_scope = $1
+            ORDER BY role_name
+        `, [user.role_scope]);
+
+    const companies =
+        await db.query(`
+            SELECT
+                id,
+                name
+            FROM companies
+            ORDER BY name
+        `);
+
+    res.render(
+        'partials/user-form',
+        {
+            layout: false,
+            isEdit: true,
+            user,
+            roles: roles.rows,
+            companies: companies.rows
+        }
+    );
+
+};
+
+exports.updateUser = async (req, res) => {
+
+    //console.log(req.body);
+
+    try {
+
+        const userId =
+            req.params.id;
+
+        const {
+            name,
+            role_id,
+            is_active,
+            email
+        } = req.body;
+
+        const existingEmailUser =
+            await db.query(
+                `
+        SELECT id
+        FROM users
+        WHERE lower(email) = lower($1)
+        AND id <> $2
+        `,
+                [
+                    email,
+                    userId
+                ]
+            );
+
+        if (existingEmailUser.rows.length) {
+
+            return res
+                .status(400)
+                .send('Email already exists');
+
+        }
+
+        const existingUser =
+            await db.query(
+                `
+                SELECT
+                    u.*,
+                    r.role_scope
+                FROM users u
+                JOIN roles r
+                    ON r.id = u.role_id
+                WHERE u.id = $1
+                `,
+                [userId]
+            );
+
+        if (!existingUser.rows.length) {
+
+            return res
+                .status(404)
+                .send('User not found');
+
+        }
+
+        const currentUser =
+            existingUser.rows[0];
+
+        const newRole =
+            await db.query(
+                `
+                SELECT
+                    id,
+                    role_scope
+                FROM roles
+                WHERE id = $1
+                `,
+                [role_id]
+            );
+
+        if (!newRole.rows.length) {
+
+            return res
+                .status(400)
+                .send('Invalid role');
+
+        }
+
+        // Prevent scope changes
+        if (
+            currentUser.role_scope !==
+            newRole.rows[0].role_scope
+        ) {
+
+            return res
+                .status(400)
+                .send(
+                    'Role scope cannot be changed'
+                );
+
+        }
+
+        await db.query(
+            `
+            UPDATE users
+            SET
+                name = $1,
+                role_id = $2,
+                is_active = $3,
+                email = $4
+            WHERE id = $5
+            `,
+            [
+                name,
+                role_id,
+                is_active === 'on',
+                email,
+                userId
+            ]
+        );
+
+        return exports.getUsers(
+            req,
+            res,
+            userId
+        );
+
+    } catch (err) {
+
+        console.error(err);
+
+        return res
+            .status(500)
+            .send('Error updating user');
+
+    }
+
+};
+
+exports.validateEmail = async (req, res) => {
+
+    const {
+        email,
+        user_id
+    } = req.body;
+
+    if (user_id) {
+
+        const currentUser =
+            await db.query(
+                `
+            SELECT email
+            FROM users
+            WHERE id = $1
+            `,
+                [user_id]
+            );
+
+        if (
+            currentUser.rows.length &&
+            currentUser.rows[0].email.toLowerCase() ===
+            email.toLowerCase()
+        ) {
+
+            return res.send('&nbsp;');
+        }
+
+    }
+
+    const result =
+        await db.query(
+            `
+            SELECT id
+            FROM users
+            WHERE lower(email) =
+                  lower($1)
+            AND id <> COALESCE($2, -1)
+            `,
+            [
+                email,
+                user_id || null
+            ]
+        );
+
+    if (result.rows.length) {
+
+        return res.send(`
+            <span class="validation-error">
+                Email already exists
+            </span>
+        `);
+
+    }
+
+    return res.send(`
+        <span class="validation-success">
+            Email available
+        </span>
+    `);
 
 };

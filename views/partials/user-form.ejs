@@ -37,9 +37,15 @@
 
                 <label>Email</label>
 
-                <input type="email" name="email" value="<%= user.email || '' %>" required>
+
+                <input type="email" name="email" value="<%= user.email || '' %>" required
+                    hx-post="/settings/users/validate-email" hx-trigger="blur" hx-target="#emailValidation"
+                    hx-swap="innerHTML" hx-include="[name='email'], [name='user_id']">
 
             </div>
+            <div id="emailValidation" class="validation-message form-full">&nbsp;</div>
+
+            <input type="hidden" name="user_id" value="<%= user.id || '' %>">
 
             <!-- ============================= -->
             <!-- Company -->
@@ -49,23 +55,33 @@
 
                 <label>Company</label>
 
-                <select name="company_id" required>
 
-                    <option value="">
-                        Select Company
-                    </option>
+                <% if (isEdit) { %>
 
-                    <% companies.forEach(c=> { %>
+                    <input type="text" value="<%= companies.find(c => c.id == user.company_id)?.name || '' %>" readonly>
+                    <input type="hidden" name="company_id" value="<%= user.company_id || '' %>">
 
-                        <option value="<%= c.id %>" <%=user.company_id==c.id ? 'selected' : '' %>>
+                    <% } else { %>
 
-                            <%= c.name %>
+                        <select name="company_id" required>
 
-                        </option>
+                            <option value="">
+                                Select Company
+                            </option>
 
-                        <% }) %>
+                            <% companies.forEach(c=> { %>
 
-                </select>
+                                <option value="<%= c.id %>" <%=user.company_id==c.id ? 'selected' : '' %>>
+
+                                    <%= c.name %>
+
+                                </option>
+
+                                <% }) %>
+
+                        </select>
+
+                        <% } %>
 
             </div>
 
@@ -142,6 +158,9 @@
 
                     </div>
 
+                    <div id="formError" class="form-error form-full">
+                    </div>
+
                     <!-- ============================= -->
                     <!-- Actions -->
                     <!-- ============================= -->
@@ -170,19 +189,92 @@
 
 <script>
 
-    enableSaveOnChange(
-        document.querySelector(
-            '.modal-box form'
-        )
-    );
+    function emailIsValid() {
 
+        const emailValidation =
+            document.getElementById(
+                'emailValidation'
+            );
+
+        if (!emailValidation) {
+            return true;
+        }
+
+        return !emailValidation.querySelector(
+            '.validation-error'
+        );
+    }
+
+    window.updateButton =
+        enableSaveOnChange(
+            document.querySelector(
+                '.modal-box form'
+            ),
+            emailIsValid
+        );
 </script>
 
 <script>
 
-(() => {
+    (() => {
 
-    function validatePasswords() {
+        function validatePasswords() {
+
+            const password =
+                document.getElementById('password');
+
+            const confirmPassword =
+                document.getElementById('confirmPassword');
+
+            const error =
+                document.getElementById('passwordError');
+
+            const saveBtn =
+                document.getElementById('saveBtn');
+
+            if (
+                !password ||
+                !confirmPassword ||
+                !error ||
+                !saveBtn
+            ) {
+                return;
+            }
+
+            if (
+                password.value.length === 0 &&
+                confirmPassword.value.length === 0
+            ) {
+
+                error.innerText = '';
+                error.style.visibility = 'hidden';
+
+                saveBtn.disabled = true;
+
+                return;
+            }
+
+            if (
+                confirmPassword.value.length > 0 &&
+                password.value !== confirmPassword.value
+            ) {
+
+                error.innerText =
+                    'Passwords do not match';
+
+                error.style.visibility =
+                    'visible';
+
+                saveBtn.disabled = true;
+
+                return;
+            }
+
+            error.innerText = '';
+            error.style.visibility = 'hidden';
+
+            //saveBtn.disabled = false;
+        }
 
         const password =
             document.getElementById('password');
@@ -190,79 +282,112 @@
         const confirmPassword =
             document.getElementById('confirmPassword');
 
-        const error =
-            document.getElementById('passwordError');
-
-        const saveBtn =
-            document.getElementById('saveBtn');
-
-        if (
-            !password ||
-            !confirmPassword ||
-            !error ||
-            !saveBtn
-        ) {
-            return;
+        if (password) {
+            password.addEventListener(
+                'input',
+                validatePasswords
+            );
         }
 
-        if (
-            password.value.length === 0 &&
-            confirmPassword.value.length === 0
-        ) {
-
-            error.innerText = '';
-            error.style.visibility = 'hidden';
-
-            saveBtn.disabled = true;
-
-            return;
+        if (confirmPassword) {
+            confirmPassword.addEventListener(
+                'input',
+                validatePasswords
+            );
         }
 
-        if (
-            confirmPassword.value.length > 0 &&
-            password.value !== confirmPassword.value
-        ) {
-
-            error.innerText =
-                'Passwords do not match';
-
-            error.style.visibility =
-                'visible';
-
-            saveBtn.disabled = true;
-
-            return;
-        }
-
-        error.innerText = '';
-        error.style.visibility = 'hidden';
-
-        //saveBtn.disabled = false;
-    }
-
-    const password =
-        document.getElementById('password');
-
-    const confirmPassword =
-        document.getElementById('confirmPassword');
-
-    if (password) {
-        password.addEventListener(
-            'input',
-            validatePasswords
-        );
-    }
-
-    if (confirmPassword) {
-        confirmPassword.addEventListener(
-            'input',
-            validatePasswords
-        );
-    }
-
-})();
+    })();
 
 </script>
+
+<script>
+    document.body.addEventListener(
+        'htmx:responseError',
+        function (evt) {
+
+            const errorDiv =
+                document.getElementById(
+                    'formError'
+                );
+
+            if (errorDiv) {
+
+                errorDiv.innerText =
+                    evt.detail.xhr.responseText;
+
+                errorDiv.style.visibility =
+                    'visible';
+
+            }
+
+        }
+    );
+
+    function clearFormError() {
+
+        const errorDiv =
+            document.getElementById(
+                'formError'
+            );
+
+        if (!errorDiv) {
+            return;
+        }
+
+        errorDiv.innerText = '';
+
+        errorDiv.style.visibility =
+            'hidden';
+    }
+
+    document
+        .querySelectorAll(
+            '.modal-box input, .modal-box select'
+        )
+        .forEach(field => {
+
+            field.addEventListener(
+                'input',
+                clearFormError
+            );
+
+            field.addEventListener(
+                'change',
+                clearFormError
+            );
+
+        });
+
+</script>
+
+<script>
+    document.body.addEventListener(
+        'htmx:afterSwap',
+        function (evt) {
+
+            if (
+                evt.target.id ===
+                'emailValidation'
+            ) {
+
+                const emailField =
+                    document.querySelector(
+                        '[name="email"]'
+                    );
+
+                if (emailField) {
+
+                    emailField.dispatchEvent(
+                        new Event(
+                            'change',
+                            { bubbles: true }
+                        )
+                    );
+
+                }
+            }
+        }
+    );</script>
 
 <style>
     .form-error {
@@ -275,5 +400,15 @@
 
     .form-full {
         grid-column: 1 / -1;
+    }
+
+    .validation-error {
+        color: #dc2626;
+        font-size: 0.85rem;
+    }
+
+    .validation-success {
+        color: #16a34a;
+        font-size: 0.85rem;
     }
 </style>

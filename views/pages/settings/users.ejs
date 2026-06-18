@@ -51,21 +51,6 @@
 
             </button>
 
-            <button class="btn-secondary" onclick="openDeleteModal(
-                        'user',
-                        ${user.id},
-                        '${user.role_code}',
-                        '${(user.name || user.email).replace(/'/g, '\\\'')}'
-                    )" ${disableDelete ? 'disabled' : '' } title="${
-                        !permissions.includes('users.delete')
-                            ? 'No permission'
-                            : ''
-                    }">
-
-                Delete
-
-            </button>
-
         </td>
 
     </tr>
@@ -106,12 +91,12 @@
                         <div class="action-row-content">
 
                             <span class="title">
-
                                 Users
-
                             </span>
 
-                            <span class="actions">
+                            <div class="toolbar-actions">
+
+                                <input type="text" id="tableFilter" placeholder="Search...">
 
                                 <% if (permissions.includes('users.create')) { %>
 
@@ -124,9 +109,10 @@
 
                                     <% } %>
 
-                            </span>
+                            </div>
 
                         </div>
+
 
                     </th>
 
@@ -138,13 +124,13 @@
 
                 <tr class="header-row">
 
-                    <th>Name</th>
+                    <th class="sortable" data-column="0">Name</th>
 
-                    <th>Email</th>
+                    <th class="sortable" data-column="1">Email</th>
 
-                    <th>Company</th>
+                    <th class="sortable" data-column="2">Company</th>
 
-                    <th>Role</th>
+                    <th class="sortable" data-column="3">Role</th>
 
                     <th>Active</th>
 
@@ -175,6 +161,19 @@
 
     </script>
 
+    <script>
+        enableTableFilter(
+            '#tableFilter',
+            'tbody tr'
+        );
+    </script>
+
+    <script>
+        enableTableSorting(
+            '.table-container table'
+        );
+    </script>
+
     <style>
         /* ========================================= */
         /* Header Layout */
@@ -189,6 +188,28 @@
             align-items: center;
 
             width: 100%;
+        }
+
+        .toolbar-actions {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+        }
+
+        .toolbar-actions input {
+
+            width: 250px;
+
+            padding: 8px 12px;
+
+            border: 1px solid #cbd5e1;
+
+            border-radius: 4px;
+
+            font-size: 13px;
         }
 
 
@@ -371,5 +392,96 @@
         td:last-child {
 
             white-space: nowrap;
+        }
+
+        /* ========================================= */
+        /* Toolbar */
+        /* ========================================= */
+
+        .toolbar {
+
+            display: flex;
+
+            justify-content: flex-end;
+
+            align-items: center;
+
+            padding: 10px;
+
+            background-color: #f8fafc;
+
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+
+        /* ========================================= */
+        /* Search Box */
+        /* ========================================= */
+
+        .toolbar input[type="text"] {
+
+            width: 280px;
+
+            padding: 8px 12px;
+
+            border: 1px solid #cbd5e1;
+
+            border-radius: 4px;
+
+            font-size: 13px;
+
+            background-color: white;
+
+            transition:
+                border-color 0.15s ease,
+                box-shadow 0.15s ease;
+        }
+
+
+        .toolbar input[type="text"]:focus {
+
+            outline: none;
+
+            border-color: #007bff;
+
+            box-shadow:
+                0 0 0 3px rgba(0, 123, 255, 0.15);
+        }
+
+
+        .toolbar input[type="text"]::placeholder {
+
+            color: #94a3b8;
+        }
+
+        /*=========================================*/
+        /*============ Sorting ====================*/
+        /*=========================================*/
+        .sortable {
+
+            cursor: pointer;
+
+            user-select: none;
+
+            position: relative;
+        }
+
+        .sortable:hover {
+
+            background-color: #475569;
+        }
+
+        .sortable[data-sort="asc"]::after {
+
+            content: " ▲";
+
+            font-size: 10px;
+        }
+
+        .sortable[data-sort="desc"]::after {
+
+            content: " ▼";
+
+            font-size: 10px;
         }
     </style>

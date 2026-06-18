@@ -168,7 +168,6 @@ exports.postLogin = async (req, res) => {
         });
 
 
-        console.log("permissions: ", permissions);
         // =====================================================
         // STORE SESSION
         // =====================================================

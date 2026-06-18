@@ -58,4 +58,10 @@ router.get('/settings/users', requirePermission('users.view'), settingsControlle
 router.get('/settings/users/add', requirePermission('users.create'), settingsController.getAddUser);
 router.post('/settings/users', requirePermission('users.create'), settingsController.createUser);
 
+router.post('/settings/users/validate-email', requirePermission('users.edit'), settingsController.validateEmail);
+router.get('/settings/users/:id/edit', requirePermission('users.edit'), settingsController.getEditUser);
+router.post('/settings/users/:id', requirePermission('users.edit'), settingsController.updateUser);
+
+
+
 module.exports = router;
