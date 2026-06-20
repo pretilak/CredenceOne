@@ -140,5 +140,20 @@ function sortTable(
             : 'desc';
 }
 
+function initTablePage() {
+
+    if (
+        typeof scrollToUpdatedRow ===
+        'function'
+    ) {
+
+        setTimeout(
+            scrollToUpdatedRow,
+            100
+        );
+
+    }
+
+}
 
 

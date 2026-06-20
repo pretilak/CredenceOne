@@ -39,8 +39,11 @@
 
 
                 <input type="email" name="email" value="<%= user.email || '' %>" required
-                    hx-post="/settings/users/validate-email" hx-trigger="blur" hx-target="#emailValidation"
-                    hx-swap="innerHTML" hx-include="[name='email'], [name='user_id']">
+                    hx-post="/settings/users/validate-email" 
+                    hx-trigger="input changed delay:500ms" 
+                    hx-target="#emailValidation"
+                    hx-swap="innerHTML" 
+                    hx-include="[name='email'], [name='user_id']">
 
             </div>
             <div id="emailValidation" class="validation-message form-full">&nbsp;</div>

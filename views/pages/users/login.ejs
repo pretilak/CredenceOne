@@ -1,14 +1,42 @@
-<h2>Login</h2>
+<% if (error) { %>
 
-<form method="POST" action="/login">
-    <label for="email">Email</label>
-    <input type="text" id="email" name="email">
+    <div class="alert-error">
 
-    <label for="password">Password</label>
-    <input type="text" id="password" name="password">
+        <%= error %>
 
-    <input type="hidden" name="redirect" value="<%= /*redirect */ %>">
+    </div>
 
-    <button type="submit">Login</button>
-</form>
+    <% } %>
 
+        <h2>Login</h2>
+
+        <form method="POST" action="/login">
+            <label for="email">Email</label>
+            <input type="text" id="email" name="email">
+
+            <label for="password">Password</label>
+            <input type="text" id="password" name="password">
+
+            <input type="hidden" name="redirect" value="<%= /*redirect */ %>">
+
+            <button type="submit">Login</button>
+        </form>
+
+        <style>
+            .alert-error {
+
+                background: #fee2e2;
+
+                color: #b91c1c;
+
+                border: 1px solid #fecaca;
+
+                padding: 12px;
+
+                margin-bottom: 15px;
+
+                border-radius: 6px;
+
+                text-align: center;
+            }
+        </style>

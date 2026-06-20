@@ -59,23 +59,40 @@ exports.postSignUp = async (req, res) => {
 }
 
 exports.getLogin = async (req, res) => {
+
     try {
+
+        const error =
+            req.session.loginError;
+
+        delete req.session.loginError;
+
         if (req.headers['hx-request']) {
-            // HTMX request → return partial ONLY
-            return res.render("pages/users/login", {
-                layout: false
-            });
+
+            return res.render(
+                "pages/users/login",
+                {
+                    layout: false,
+                    error
+                }
+            );
         }
 
-        // Normal browser request → full page
-        res.render("pages/users/login", {
-            title: "Login",
-            activePage: "Login",
-            user: null
-        });
+        res.render(
+            "pages/users/login",
+            {
+                title: "Login",
+                activePage: "Login",
+                user: null,
+                error
+            }
+        );
+
     } catch (err) {
+
         console.log(err);
-    };
+
+    }
 };
 
 exports.postLogin = async (req, res) => {
@@ -102,9 +119,11 @@ exports.postLogin = async (req, res) => {
         const user = result.rows[0];
 
         if (!user) {
-            return res
-                .status(401)
-                .json({ error: 'Invalid credentials' });
+
+            req.session.loginError =
+                'Invalid email or password';
+
+            return res.redirect('/login');
         }
 
         // =====================================================
@@ -117,9 +136,11 @@ exports.postLogin = async (req, res) => {
         );
 
         if (!isMatch) {
-            return res
-                .status(401)
-                .json({ error: 'Invalid credentials' });
+
+            req.session.loginError =
+                'Invalid email or password';
+
+            return res.redirect('/login');
         }
 
         // =====================================================
@@ -189,6 +210,8 @@ exports.postLogin = async (req, res) => {
             permissions: [...permissions]
         };
 
+        console.log(req.session.user.permissions);
+        
         return req.session.save(() => {
             res.redirect("/");
         });
