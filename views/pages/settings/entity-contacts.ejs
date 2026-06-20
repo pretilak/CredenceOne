@@ -12,7 +12,9 @@
                             Contacts - <%= entity.name %>
                         </span>
 
-                        <span class="actions">
+                        <span class="toolbar-actions">
+
+                            <input type="text" id="tableFilter" placeholder="Search contacts...">
 
                             <button hx-get="/settings/entities" hx-target="#main-content" hx-swap="innerHTML"
                                 hx-push-url="true" class="btn-secondary">
@@ -38,10 +40,10 @@
 
             <tr class="header-row">
 
-                <th>Name</th>
-                <th>Designation</th>
-                <th>Email</th>
-                <th>Mobile</th>
+                <th class="sortable">Name</th>
+                <th class="sortable">Designation</th>
+                <th class="sortable">Email</th>
+                <th class="sortable">Mobile</th>
                 <th>Primary</th>
                 <th>Action</th>
 
@@ -103,6 +105,46 @@
 </div>
 
 <style>
+
+        /* ========================================= */
+        /* Header Layout */
+        /* ========================================= */
+
+        .action-row-content {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            width: 100%;
+        }
+
+        .toolbar-actions {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+        }
+
+        .toolbar-actions input {
+
+            width: 250px;
+
+            padding: 8px 12px;
+
+            border: 1px solid #cbd5e1;
+
+            border-radius: 4px;
+
+            font-size: 13px;
+        }
+
+
+
     /* 1. Turn the cell wrapper into a split layout row */
     .action-row-content {
         display: flex;
@@ -227,3 +269,93 @@
     }, 100);
 
 </script>
+
+    <script>
+        initTablePage();
+    </script>
+
+    <script>
+        enableTableFilter(
+            '#tableFilter',
+            'tbody tr'
+        );
+    </script>
+
+    <script>
+        enableTableSorting(
+            '.table-container table'
+        );
+    </script>
+
+    <style>
+                /* ========================================= */
+        /* Search Box */
+        /* ========================================= */
+
+        .toolbar input[type="text"] {
+
+            width: 280px;
+
+            padding: 8px 12px;
+
+            border: 1px solid #cbd5e1;
+
+            border-radius: 4px;
+
+            font-size: 13px;
+
+            background-color: white;
+
+            transition:
+                border-color 0.15s ease,
+                box-shadow 0.15s ease;
+        }
+
+
+        .toolbar input[type="text"]:focus {
+
+            outline: none;
+
+            border-color: #007bff;
+
+            box-shadow:
+                0 0 0 3px rgba(0, 123, 255, 0.15);
+        }
+
+
+        .toolbar input[type="text"]::placeholder {
+
+            color: #94a3b8;
+        }
+
+        /*=========================================*/
+        /*============ Sorting ====================*/
+        /*=========================================*/
+        .sortable {
+
+            cursor: pointer;
+
+            user-select: none;
+
+            position: relative;
+        }
+
+        .sortable:hover {
+
+            background-color: #475569;
+        }
+
+        .sortable[data-sort="asc"]::after {
+
+            content: " ▲";
+
+            font-size: 10px;
+        }
+
+        .sortable[data-sort="desc"]::after {
+
+            content: " ▼";
+
+            font-size: 10px;
+        }
+    </style>

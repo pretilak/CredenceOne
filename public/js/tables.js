@@ -59,26 +59,24 @@ function enableTableSorting(tableSelector) {
             '.sortable'
         );
 
-    headers.forEach(header => {
+    headers.forEach(
+        (header, index) => {
 
-        header.addEventListener(
-            'click',
-            () => {
+            header.addEventListener(
+                'click',
+                () => {
 
-                const colIndex =
-                    parseInt(
-                        header.dataset.column
+                    sortTable(
+                        table,
+                        index,
+                        header
                     );
 
-                sortTable(
-                    table,
-                    colIndex,
-                    header
-                );
-            }
-        );
+                }
+            );
 
-    });
+        }
+    );
 }
 
 //================ sortTable ===================

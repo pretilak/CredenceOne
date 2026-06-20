@@ -210,7 +210,6 @@ exports.postLogin = async (req, res) => {
             permissions: [...permissions]
         };
 
-        console.log(req.session.user.permissions);
         
         return req.session.save(() => {
             res.redirect("/");

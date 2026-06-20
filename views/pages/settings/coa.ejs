@@ -19,16 +19,17 @@
         <td>${acc.is_active ? 'Yes' : 'No'}</td>
         <td>
 
-            <button class="btn-secondary" hx-get="/settings/coa/${acc.id}/edit" hx-target="#modal" hx-swap="innerHTML" ${(disableEdit)
-                ? 'disabled' : '' } title="${!permissions.includes('coa.edit')
+            <button class="btn-secondary" hx-get="/settings/coa/${acc.id}/edit" hx-target="#modal" hx-swap="innerHTML"
+                ${(disableEdit) ? 'disabled' : '' } title="${!permissions.includes('coa.edit')
                 ? 'No permission' : acc.is_system
                 ? 'This is a system account' : ''
             }">
                 Edit
             </button>
 
-            <button class="btn-secondary" onclick="openDeleteModal('coa', ${acc.id}, '${acc.acc_code}','${acc.acc_name.replace(/'/g, " \\'")}'
-                )" ${disableDelete ? 'disabled' : '' } title="${
+            <button class="btn-secondary"
+                onclick="openDeleteModal('coa', ${acc.id}, '${acc.acc_code}','${acc.acc_name.replace(/'/g, " \\'")}' )"
+                ${disableDelete ? 'disabled' : '' } title="${
                         !permissions.includes('coa.delete') ? 'No permission' : acc.is_system
                         ? 'This is a system account' : acc.is_used
                             ? 'Account is used' : acc.has_children
@@ -59,7 +60,10 @@
                         <div class="action-row-content">
                             <span class="title">Chart of Accounts</span>
 
-                            <span class="actions">
+                            <span class="toolbar-actions">
+
+                                <input type="text" id="tableFilter" placeholder="Search accounts...">
+
                                 <% if (permissions.includes('coa.create')) { %>
                                     <button class="btn-primary" hx-get="/settings/coa/add" hx-target="#modal"
                                         hx-swap="innerHTML">
@@ -71,9 +75,9 @@
                     </th>
                 </tr>
                 <tr class="header-row">
-                    <th>Code</th>
-                    <th>Name</th>
-                    <th>Type</th>
+                    <th class="sortable">Code</th>
+                    <th class="sortable">Name</th>
+                    <th class="sortable">Type</th>
                     <th>Active</th>
                     <th>Action</th>
                 </tr>
@@ -187,3 +191,94 @@
     <script>
         setTimeout(scrollToUpdatedRow, 100);
     </script>
+
+    <style>
+                /* ========================================= */
+        /* Header Layout */
+        /* ========================================= */
+
+        .action-row-content {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            width: 100%;
+        }
+
+        .toolbar-actions {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+        }
+
+        .toolbar-actions input {
+
+            width: 250px;
+
+            padding: 8px 12px;
+
+            border: 1px solid #cbd5e1;
+
+            border-radius: 4px;
+
+            font-size: 13px;
+        }
+
+    </style>
+
+        <script>
+        initTablePage();
+    </script>
+
+    <script>
+        enableTableFilter(
+            '#tableFilter',
+            'tbody tr'
+        );
+    </script>
+
+    <script>
+        enableTableSorting(
+            '.table-container table'
+        );
+    </script>
+
+    <style>
+                /*=========================================*/
+        /*============ Sorting ====================*/
+        /*=========================================*/
+        .sortable {
+
+            cursor: pointer;
+
+            user-select: none;
+
+            position: relative;
+        }
+
+        .sortable:hover {
+
+            background-color: #475569;
+        }
+
+        .sortable[data-sort="asc"]::after {
+
+            content: " ▲";
+
+            font-size: 10px;
+        }
+
+        .sortable[data-sort="desc"]::after {
+
+            content: " ▼";
+
+            font-size: 10px;
+        }
+
+    </style>

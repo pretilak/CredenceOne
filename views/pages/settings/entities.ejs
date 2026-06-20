@@ -43,8 +43,8 @@
 
         <td>
 
-            <button class="btn-secondary" hx-get="/settings/entities/${entity.id}/edit" hx-target="#modal" hx-swap="innerHTML" ${disableEdit
-                ? 'disabled' : '' } title="${
+            <button class="btn-secondary" hx-get="/settings/entities/${entity.id}/edit" hx-target="#modal"
+                hx-swap="innerHTML" ${disableEdit ? 'disabled' : '' } title="${
                         !permissions.includes('entities.edit')
                             ? 'No permission'
                             : ''
@@ -66,8 +66,8 @@
 
             </button>
 
-            <button class="btn-secondary" hx-get="/settings/entities/${entity.id}/contacts" hx-target="#main-content" hx-swap="innerHTML"
-                hx-push-url="true">
+            <button class="btn-secondary" hx-get="/settings/entities/${entity.id}/contacts" hx-target="#main-content"
+                hx-swap="innerHTML" hx-push-url="true">
 
                 Contacts
 
@@ -88,92 +88,92 @@
 
         <table>
 
-            <table>
+            <colgroup>
 
-                <colgroup>
+                <col style="width: 20%">
+                <col style="width: 8%">
+                <col style="width: 20%">
+                <col style="width: 12%">
+                <col style="width: 6%">
+                <col style="width: 14%">
+                <col style="width: 4%">
+                <col style="width: 16%">
 
-                    <col style="width: 20%">
-                    <col style="width: 8%">
-                    <col style="width: 20%">
-                    <col style="width: 12%">
-                    <col style="width: 6%">
-                    <col style="width: 14%">
-                    <col style="width: 4%">
-                    <col style="width: 16%">
+            </colgroup>
 
-                </colgroup>
+            <thead>
 
-                <thead>
+                <!-- ===================================== -->
+                <!-- Action Row -->
+                <!-- ===================================== -->
 
-                    <!-- ===================================== -->
-                    <!-- Action Row -->
-                    <!-- ===================================== -->
+                <tr class="action-row">
 
-                    <tr class="action-row">
+                    <th colspan="8">
 
-                        <th colspan="8">
+                        <div class="action-row-content">
 
-                            <div class="action-row-content">
+                            <span class="title">
 
-                                <span class="title">
+                                Entities
 
-                                    Entities
+                            </span>
 
-                                </span>
+                            <span class="toolbar-actions">
 
-                                <span class="actions">
+                                <input type="text" id="tableFilter" placeholder="Search entities...">
 
-                                    <% if (permissions.includes('entities.create')) { %>
+                                <% if (permissions.includes('entities.create')) { %>
 
-                                        <button class="btn-primary" hx-get="/settings/entities/add" hx-target="#modal"
-                                            hx-swap="innerHTML">
+                                    <button class="btn-primary" hx-get="/settings/entities/add" hx-target="#modal"
+                                        hx-swap="innerHTML">
 
-                                            +Add
+                                        +Add
 
-                                        </button>
+                                    </button>
 
-                                        <% } %>
+                                    <% } %>
 
-                                </span>
+                            </span>
 
-                            </div>
+                        </div>
 
-                        </th>
+                    </th>
 
-                    </tr>
-
-
-                    <!-- ===================================== -->
-                    <!-- Header Row -->
-                    <!-- ===================================== -->
-
-                    <tr class="header-row">
-
-                        <th>Name</th>
-                        <th>Type</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <th>Currency</th>
-                        <th>Forwarder</th>
-                        <th>Active</th>
-                        <th>Action</th>
-
-                    </tr>
-
-                </thead>
+                </tr>
 
 
-                <!-- ========================================= -->
-                <!-- Body -->
-                <!-- ========================================= -->
+                <!-- ===================================== -->
+                <!-- Header Row -->
+                <!-- ===================================== -->
 
-                <tbody>
+                <tr class="header-row">
 
-                    <%- renderEntities() %>
+                    <th class="sortable">Name</th>
+                    <th class="sortable">Type</th>
+                    <th class="sortable">Email</th>
+                    <th class="sortable">Phone</th>
+                    <th class="sortable">Currency</th>
+                    <th class="sortable">Forwarder</th>
+                    <th>Active</th>
+                    <th>Action</th>
 
-                </tbody>
+                </tr>
 
-            </table>
+            </thead>
+
+
+            <!-- ========================================= -->
+            <!-- Body -->
+            <!-- ========================================= -->
+
+            <tbody>
+
+                <%- renderEntities() %>
+
+            </tbody>
+
+        </table>
 
     </div>
 
@@ -381,3 +381,133 @@
     <script>
         setTimeout(scrollToUpdatedRow, 100);
     </script>
+
+    <style>
+        /* ========================================= */
+        /* Search Box */
+        /* ========================================= */
+
+        .toolbar input[type="text"] {
+
+            width: 280px;
+
+            padding: 8px 12px;
+
+            border: 1px solid #cbd5e1;
+
+            border-radius: 4px;
+
+            font-size: 13px;
+
+            background-color: white;
+
+            transition:
+                border-color 0.15s ease,
+                box-shadow 0.15s ease;
+        }
+
+
+        .toolbar input[type="text"]:focus {
+
+            outline: none;
+
+            border-color: #007bff;
+
+            box-shadow:
+                0 0 0 3px rgba(0, 123, 255, 0.15);
+        }
+
+
+        .toolbar input[type="text"]::placeholder {
+
+            color: #94a3b8;
+        }
+
+        /*=========================================*/
+        /*============ Sorting ====================*/
+        /*=========================================*/
+        .sortable {
+
+            cursor: pointer;
+
+            user-select: none;
+
+            position: relative;
+        }
+
+        .sortable:hover {
+
+            background-color: #475569;
+        }
+
+        .sortable[data-sort="asc"]::after {
+
+            content: " ▲";
+
+            font-size: 10px;
+        }
+
+        .sortable[data-sort="desc"]::after {
+
+            content: " ▼";
+
+            font-size: 10px;
+        }
+    </style>
+
+    <script>
+        initTablePage();
+    </script>
+
+    <script>
+        enableTableFilter(
+            '#tableFilter',
+            'tbody tr'
+        );
+    </script>
+
+    <script>
+        enableTableSorting(
+            '.table-container table'
+        );
+    </script>
+
+    <style>
+                /* ========================================= */
+        /* Header Layout */
+        /* ========================================= */
+
+        .action-row-content {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            width: 100%;
+        }
+
+        .toolbar-actions {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+        }
+
+        .toolbar-actions input {
+
+            width: 250px;
+
+            padding: 8px 12px;
+
+            border: 1px solid #cbd5e1;
+
+            border-radius: 4px;
+
+            font-size: 13px;
+        }
+
+    </style>
