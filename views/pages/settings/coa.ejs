@@ -53,6 +53,16 @@
 
     <div class="table-container">
         <table>
+            <colgroup>
+
+                <col style="width: 10%">
+                <col style="width: 40%">
+                <col style="width: 20%">
+                <col style="width: 10%">
+                <col style="width: 20%">
+
+            </colgroup>
+
             <thead>
                 <tr class="action-row">
                     <th colspan="5">
@@ -146,6 +156,7 @@
             border-collapse: separate;
             border-spacing: 0;
             font-family: sans-serif;
+            table-layout: fixed;
         }
 
         thead {
@@ -193,7 +204,7 @@
     </script>
 
     <style>
-                /* ========================================= */
+        /* ========================================= */
         /* Header Layout */
         /* ========================================= */
 
@@ -229,10 +240,9 @@
 
             font-size: 13px;
         }
-
     </style>
 
-        <script>
+    <script>
         initTablePage();
     </script>
 
@@ -250,7 +260,7 @@
     </script>
 
     <style>
-                /*=========================================*/
+        /*=========================================*/
         /*============ Sorting ====================*/
         /*=========================================*/
         .sortable {
@@ -280,5 +290,4 @@
 
             font-size: 10px;
         }
-
     </style>
