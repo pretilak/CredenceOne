@@ -1,8 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const settingsController = require("../controllers/settingsController");
+
 const requireAuth = require("../middlewares/requireAuth");
 const requirePermission = require("../middlewares/permissions");
+
+const settingsController = require("../controllers/settingsController");
 
 //CoA
 router.get('/settings/coa/parents', settingsController.getParentsByType);
@@ -62,6 +64,16 @@ router.post('/settings/users/validate-email', requirePermission('users.edit'), s
 router.get('/settings/users/:id/edit', requirePermission('users.edit'), settingsController.getEditUser);
 router.post('/settings/users/:id', requirePermission('users.edit'), settingsController.updateUser);
 
+//Companies
+router.get('/settings/companies', requirePermission('companies.view'), settingsController.getCompanies);
 
+router.get('/settings/companies/add', requirePermission('companies.create'), settingsController.getAddCompany);
+router.post('/settings/companies', requirePermission('companies.create'), settingsController.postAddCompany);
+
+router.get('/settings/companies/:id/edit', requirePermission('companies.edit'), settingsController.getEditCompany);
+router.post('/settings/companies/:id', requirePermission('companies.edit'), settingsController.postEditCompany);
+
+//Company->Users
+router.get('/settings/companies/:id/users', requirePermission('users.view'), settingsController.getCompanyUsers);
 
 module.exports = router;

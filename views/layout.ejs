@@ -31,96 +31,108 @@
                             Dashboard
                         </a>
                     </li>
-                    <% } %>
+                <% } %>
 
-                        <% if (permissions.includes('transactions.view')) { %>
-                            <li>
-                                <a href="/transactions" class="<%= activePage === 'transactions' ? 'active' : '' %>">
-                                    Transactions
-                                </a>
-                            </li>
-                            <% } %>
+                <% if (permissions.includes('transactions.view')) { %>
+                    <li>
+                        <a href="/transactions" class="<%= activePage === 'transactions' ? 'active' : '' %>">
+                            Transactions
+                        </a>
+                    </li>
+                <% } %>
 
-                                <% if (permissions.includes('sales.view')) { %>
+                <% if (permissions.includes('sales.view')) { %>
+                    <li>
+                        <a href="/sales" class="<%= activePage === 'sales' ? 'active' : '' %>">
+                            Sales
+                        </a>
+                    </li>
+                <% } %>
+
+                <% if (permissions.includes('purchases.view')) { %>
+                    <li>
+                        <a href="/purchases" class="<%= activePage === 'purchases' ? 'active' : '' %>">
+                            Purchases
+                        </a>
+                    </li>
+                <% } %>
+
+                <% if (permissions.includes('settings.view') ||
+                        permissions.includes('coa.view') ||
+                        permissions.includes('users.view')) { %>
+                    <li class="dropdown">
+                        <a href="javascript:void(0);" 
+                            onclick="toggleSettingsMenu(event)"
+                            class="<%= ['settings','coa'].includes(activePage) ? 'active' : '' %>">
+                            Settings ▾ 
+                        </a>
+
+                            <ul class="dropdown-menu" id="settings-menu">
+
+                                <% if (permissions.includes('companies.view')) { %>
                                     <li>
-                                        <a href="/sales" class="<%= activePage === 'sales' ? 'active' : '' %>">
-                                            Sales
+                                        <a href="/settings/companies"
+                                            class="<%= activePage === 'companies' ? 'active' : '' %>"
+                                            hx-get="/settings/companies" hx-target="#main-content"
+                                            hx-swap="innerHTML" hx-push-url="true">
+                                            Companies
                                         </a>
                                     </li>
-                                    <% } %>
+                                <% } %>
 
-                                        <% if (permissions.includes('purchases.view')) { %>
-                                            <li>
-                                                <a href="/purchases"
-                                                    class="<%= activePage === 'purchases' ? 'active' : '' %>">
-                                                    Purchases
-                                                </a>
-                                            </li>
-                                            <% } %>
+                                <% if (permissions.includes('coa.view')) { %>
+                                    <li>
+                                        <a href="/settings/coa"
+                                            class="<%= activePage === 'coa' ? 'active' : '' %>"
+                                            hx-get="/settings/coa" hx-target="#main-content"
+                                            hx-swap="innerHTML" hx-push-url="true">
+                                            Chart of Accounts
+                                        </a>
+                                    </li>
+                                <% } %>
 
-                                                <% if (permissions.includes('settings.view') ||
-                                                    permissions.includes('coa.view') ||
-                                                    permissions.includes('users.view')) { %>
-                                                    <li class="dropdown">
-                                                        <a href="javascript:void(0);"
-                                                            onclick="toggleSettingsMenu(event)"
-                                                            class="<%= ['settings','coa'].includes(activePage) ? 'active' : '' %>">
-                                                            Settings ▾
-                                                        </a>
-                                                        <ul class="dropdown-menu" id="settings-menu">
-                                                            <% if (permissions.includes('coa.view')) { %>
-                                                                <li>
-                                                                    <a href="/settings/coa"
-                                                                        class="<%= activePage === 'coa' ? 'active' : '' %>"
-                                                                        hx-get="/settings/coa" hx-target="#main-content"
-                                                                        hx-swap="innerHTML" hx-push-url="true">
-                                                                        Chart of Accounts
-                                                                    </a>
-                                                                </li>
-                                                                <% } %>
-                                                                    <% if (permissions.includes('entities.view')) { %>
-                                                                        <li>
-                                                                            <a href="/settings/entities"
-                                                                                class="<%= activePage === 'entities' ? 'active' : '' %>"
-                                                                                hx-get="/settings/entities"
-                                                                                hx-target="#main-content"
-                                                                                hx-swap="innerHTML" hx-push-url="true">
-                                                                                Entities
-                                                                            </a>
-                                                                        </li>
-                                                                        <% } %>
+                                <% if (permissions.includes('entities.view')) { %>
+                                    <li>
+                                        <a href="/settings/entities"
+                                            class="<%= activePage === 'entities' ? 'active' : '' %>"
+                                            hx-get="/settings/entities"
+                                            hx-target="#main-content"
+                                            hx-swap="innerHTML" hx-push-url="true">
+                                            Entities
+                                        </a>
+                                    </li>
+                                <% } %>
 
-                                                                            <% if (permissions.includes('roles.view')) {
-                                                                                %>
-                                                                                <li>
-                                                                                    <a href="/settings/roles"
-                                                                                        class="<%= activePage === 'roles' ? 'active' : '' %>"
-                                                                                        hx-get="/settings/roles"
-                                                                                        hx-target="#main-content"
-                                                                                        hx-swap="innerHTML"
-                                                                                        hx-push-url="true">
-                                                                                        Roles
-                                                                                    </a>
-                                                                                </li>
-                                                                                <% } %>
+                                <% if (permissions.includes('roles.view')) { %>
+                                    <li>
+                                        <a href="/settings/roles"
+                                            class="<%= activePage === 'roles' ? 'active' : '' %>"
+                                            hx-get="/settings/roles"
+                                            hx-target="#main-content"
+                                            hx-swap="innerHTML"
+                                            hx-push-url="true">
+                                            Roles
+                                        </a>
+                                    </li>
+                                <% } %>
 
-                                                                                    <% if
-                                                                                        (permissions.includes('users.view'))
-                                                                                        { %>
-                                                                                        <li>
-                                                                                            <a href="/settings/users"
-                                                                                                class="<%= activePage === 'users' ? 'active' : '' %>"
-                                                                                                hx-get="/settings/users"
-                                                                                                hx-target="#main-content"
-                                                                                                hx-swap="innerHTML"
-                                                                                                hx-push-url="true">
-                                                                                                Users
-                                                                                            </a>
-                                                                                        </li>
-                                                                                        <% } %>
-                                                        </ul>
-                                                    </li>
-                                                    <% } %>
+                                <% if (permissions.includes('users.view')) { %>
+                                    <li>
+                                        <a href="/settings/users"
+                                            class="<%= activePage === 'users' ? 'active' : '' %>"
+                                            hx-get="/settings/users"
+                                            hx-target="#main-content"
+                                            hx-swap="innerHTML"
+                                            hx-push-url="true">
+                                            Users
+                                        </a>
+                                    </li>
+                                <% } %>
+
+                            </ul>
+
+                    </li>
+                <% } %>
 
             </ul>
 
@@ -511,7 +523,8 @@
         module,
         id,
         code,
-        name
+        name,
+        contact_count = ''
     ) {
 
         let title;
@@ -556,6 +569,11 @@
                 'modal'
             );
 
+        const contactMessage =
+            contact_count > 0
+            ? `This will also delete ${contact_count} contact(s) associated with this entity.`
+            : '';
+            
         modal.innerHTML = `
         <div class="modal-overlay"
              onclick="closeModal()">
@@ -568,6 +586,14 @@
                 <p>
                     Are you sure you want to delete this record?
                 </p>
+
+                ${
+                    contactMessage
+                        ? `<p class="warning">
+                        ${contactMessage}
+                        </p>`
+                        : ''
+                }
 
                 <div class="account-preview">
                     <strong>${entityType}: ${name}</strong>

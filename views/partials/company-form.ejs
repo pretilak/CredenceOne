@@ -1,0 +1,400 @@
+<div class="modal-overlay">
+
+    <div class="modal-box">
+
+        <h2>
+            <%= isEdit ? 'Edit Company' : 'Add Company' %>
+        </h2>
+
+        <form hx-post="<%= isEdit
+                ? `/settings/companies/${company.id}`
+                : '/settings/companies' %>" hx-target="#main-content" hx-swap="innerHTML" hx-on="
+                htmx:beforeRequest:
+                    disableSave(this);
+
+                htmx:afterSwap:
+                    if(event.detail.target.id === 'main-content'){
+                        closeModal();
+                    }
+            ">
+
+            <!-- Company Name -->
+
+            <div class="form-group">
+
+                <label>
+                    Company Name
+                </label>
+
+                <input type="text" name="name" value="<%= company.name || '' %>" required>
+
+            </div>
+
+            <!-- Country -->
+
+            <div class="form-group">
+
+                <label>
+                    Country
+                </label>
+
+                <select name="country_id" required>
+
+                    <option value="">
+                        Select Country
+                    </option>
+
+                    <% countries.forEach(country=> { %>
+
+                        <option value="<%= country.id %>" <%=company.country_id==country.id ? 'selected' : '' %>>
+
+                            <%= country.name %>
+
+                        </option>
+
+                        <% }) %>
+
+                </select>
+
+            </div>
+
+            <!-- Currency -->
+
+            <div class="form-group">
+
+                <label>
+                    Base Currency
+                </label>
+
+                <select name="base_currency" required>
+
+                    <option value="">
+                        Select Currency
+                    </option>
+
+                    <% currencies.forEach(currency=> { %>
+
+                        <option value="<%= currency.code %>" <%=company.base_currency==currency.code ? 'selected' : ''
+                            %>>
+
+                            <%= currency.code %> -
+                                <%= currency.name %>
+
+                        </option>
+
+                        <% }) %>
+
+                </select>
+
+            </div>
+
+            <!-- Status -->
+
+            <div class="form-group">
+
+                <label>
+                    Status
+                </label>
+
+                <select name="status" required>
+
+                    <option value="active" <%=company.status==='active' ? 'selected' : '' %>>
+
+                        Active
+
+                    </option>
+
+                    <option value="inactive" <%=company.status==='inactive' ? 'selected' : '' %>>
+
+                        Inactive
+
+                    </option>
+
+                </select>
+
+            </div>
+
+            <!-- Max Users -->
+
+            <div class="form-group">
+
+                <label>
+                    Max Users
+                </label>
+
+                <input type="number" min="1" name="max_users" value="<%= company.max_users || 5 %>" required>
+
+            </div>
+
+            <!-- Financial Year Start -->
+
+            <div class="form-group">
+
+                <label>
+                    Financial Year Start
+                </label>
+
+                <input type="date" name="financial_year_start" value="<%= company.financial_year_start || '' %>">
+
+            </div>
+
+            <!-- GST Registered -->
+
+            <div class="checkbox-group">
+
+                <input type="checkbox" id="gst_registered" name="gst_registered" <%=company.gst_registered ? 'checked'
+                    : '' %>>
+
+                <label for="gst_registered">
+                    GST Registered
+                </label>
+
+            </div>
+
+            <!-- GST Number -->
+
+            <div class="form-group" id="gstNumberGroup">
+
+                <label>
+                    GST Number
+                </label>
+
+                <input type="text" id="gst_number" name="gst_number" value="<%= company.gst_number || '' %>">
+
+            </div>
+
+            <!-- Error -->
+
+            <div id="formError" class="form-error form-full">
+            </div>
+
+            <!-- Actions -->
+
+            <div class="modal-actions">
+
+                <button type="button" onclick="closeModal()">
+
+                    Cancel
+
+                </button>
+
+                <button type="submit" id="saveBtn" disabled>
+
+                    Save
+
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<script>
+
+    function toggleGSTNumber() {
+
+        const gstRegistered =
+            document.getElementById(
+                'gst_registered'
+            );
+
+        const gstNumber =
+            document.getElementById(
+                'gst_number'
+            );
+
+        gstNumber.disabled =
+            !gstRegistered.checked;
+
+        if (!gstRegistered.checked) {
+
+            gstNumber.value = '';
+
+        }
+
+    }
+
+    document
+        .getElementById(
+            'gst_registered'
+        )
+        ?.addEventListener(
+            'change',
+            toggleGSTNumber
+        );
+
+    toggleGSTNumber();
+
+</script>
+
+<script>
+
+    enableSaveOnChange(
+        document.querySelector(
+            '.modal-box form'
+        )
+    );
+
+</script>
+
+<!-- JS for GST Section -->
+<script>
+
+    function toggleGSTNumber() {
+
+        const gstRegistered =
+            document.getElementById(
+                'gst_registered'
+            );
+
+        const gstNumberGroup =
+            document.getElementById(
+                'gstNumberGroup'
+            );
+
+        const gstNumber =
+            document.getElementById(
+                'gst_number'
+            );
+
+        if (gstRegistered.checked) {
+
+            gstNumberGroup.style.visibility =
+                'visible';
+
+            gstNumber.disabled = false;
+
+        } else {
+
+            gstNumberGroup.style.visibility =
+                'hidden';
+
+            gstNumber.disabled = true;
+
+            gstNumber.value = '';
+
+        }
+    }
+
+    document
+        .getElementById(
+            'gst_registered'
+        )
+        ?.addEventListener(
+            'change',
+            toggleGSTNumber
+        );
+
+    toggleGSTNumber();
+
+</script>
+
+<!--Form Error handling -->
+<script>
+    document.body.addEventListener(
+        'htmx:responseError',
+        function (evt) {
+
+            const errorDiv =
+                document.getElementById(
+                    'formError'
+                );
+
+            if (errorDiv) {
+
+                errorDiv.innerText =
+                    evt.detail.xhr.responseText;
+
+                errorDiv.style.visibility =
+                    'visible';
+
+            }
+
+        }
+    );
+
+    function clearFormError() {
+
+        const errorDiv =
+            document.getElementById(
+                'formError'
+            );
+
+        if (!errorDiv) {
+            return;
+        }
+
+        errorDiv.innerText = '';
+
+        errorDiv.style.visibility =
+            'hidden';
+    }
+
+    document
+        .querySelectorAll(
+            '.modal-box input, .modal-box select'
+        )
+        .forEach(field => {
+
+            field.addEventListener(
+                'input',
+                clearFormError
+            );
+
+            field.addEventListener(
+                'change',
+                clearFormError
+            );
+
+        });
+
+</script>
+
+<!-- CSS for GST Section -->
+<style>
+    .checkbox-group {
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 8px;
+
+        padding-bottom: 10px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+
+        width: auto;
+
+        margin: 0;
+    }
+</style>
+
+<!--CSS for Error rendering in form -->
+<style>
+    .form-error {
+        min-height: 18px;
+        visibility: hidden;
+        color: #dc2626;
+        font-size: 0.85rem;
+        font-style: italic;
+    }
+
+    .form-full {
+        grid-column: 1 / -1;
+    }
+
+    .validation-error {
+        color: #dc2626;
+        font-size: 0.85rem;
+    }
+
+    .validation-success {
+        color: #16a34a;
+        font-size: 0.85rem;
+    }
+</style>

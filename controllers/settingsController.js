@@ -380,11 +380,27 @@ exports.getEntities = async (req, res, updatedId = null) => {
     try {
 
         const result = await db.query(`
-            SELECT e.*, f.name AS default_forwarder_name
+            SELECT
+                e.*,
+                f.name AS default_forwarder_name,
+                COALESCE(c.contact_count, 0) AS contact_count
+
             FROM entities e
+
             LEFT JOIN entities f
-            ON e.default_forwarder_id = f.id
+                ON e.default_forwarder_id = f.id
+
+            LEFT JOIN (
+                SELECT
+                    entity_id,
+                    COUNT(*) AS contact_count
+                FROM entity_contacts
+                GROUP BY entity_id
+            ) c
+                ON c.entity_id = e.id
+
             WHERE e.company_id = $1
+
             ORDER BY e.name
         `, [req.session.user.company_id]);
 
@@ -1557,6 +1573,9 @@ exports.getAddUser = async (req, res) => {
             ORDER BY name
         `);
 
+    const companyId =
+        req.query.companyId || '';
+
     res.render(
         'partials/user-form',
         {
@@ -1568,7 +1587,11 @@ exports.getAddUser = async (req, res) => {
 
             roles: roles.rows,
 
-            companies: companies.rows
+            companies: companies.rows,
+
+            companyId: companyId,
+
+            isEdit: false
         }
     );
 
@@ -1577,6 +1600,8 @@ exports.getAddUser = async (req, res) => {
 const bcrypt = require('bcrypt');
 
 exports.createUser = async (req, res) => {
+
+    //console.log(req.body);
 
     try {
 
@@ -1689,7 +1714,7 @@ exports.createUser = async (req, res) => {
         // Insert
         // ==========================
 
-        await db.query(
+        const result = await db.query(
             `
             INSERT INTO users
             (
@@ -1708,7 +1733,7 @@ exports.createUser = async (req, res) => {
                 $4,
                 $5,
                 $6
-            )
+            ) RETURNING id
             `,
             [
                 name,
@@ -1719,6 +1744,21 @@ exports.createUser = async (req, res) => {
                 is_active === 'on'
             ]
         );
+
+        const returnCompanyId = req.body.return_company_id;
+
+        req.session.updatedId = result.rows[0].id;
+
+        if (returnCompanyId) {
+
+            req.params.id = returnCompanyId;
+
+            return exports.getCompanyUsers(
+                req,
+                res
+            );
+
+        }
 
         return exports.getUsers(
             req,
@@ -1768,6 +1808,8 @@ exports.getEditUser = async (req, res) => {
     const user =
         userResult.rows[0];
 
+    const companyId = user.companyId;
+
     const roles =
         await db.query(`
             SELECT
@@ -1796,7 +1838,8 @@ exports.getEditUser = async (req, res) => {
             isEdit: true,
             user,
             roles: roles.rows,
-            companies: companies.rows
+            companies: companies.rows,
+            companyId: user.companyId || ''
         }
     );
 
@@ -1899,7 +1942,7 @@ exports.updateUser = async (req, res) => {
 
         }
 
-        await db.query(
+        const result = await db.query(
             `
             UPDATE users
             SET
@@ -1908,6 +1951,7 @@ exports.updateUser = async (req, res) => {
                 is_active = $3,
                 email = $4
             WHERE id = $5
+            RETURNING id;
             `,
             [
                 name,
@@ -1917,6 +1961,23 @@ exports.updateUser = async (req, res) => {
                 userId
             ]
         );
+
+        const returnCompanyId = req.body.company_id;
+
+        //console.log("returnCompanyId:", returnCompanyId);
+
+        req.session.updatedId = result.rows[0].id;
+
+        if (returnCompanyId) {
+
+            req.params.id = returnCompanyId;
+
+            return exports.getCompanyUsers(
+                req,
+                res
+            );
+
+        }
 
         return exports.getUsers(
             req,
@@ -1998,3 +2059,726 @@ exports.validateEmail = async (req, res) => {
     `);
 
 };
+
+//Companies
+//const db = require('../config/db');
+
+//=========================================
+// List Companies
+//=========================================
+
+exports.getCompanies =
+    async (req, res) => {
+
+        try {
+
+            const result =
+                await db.query(
+                    `
+                    SELECT
+                        c.id,
+                        c.name,
+                        co.name AS country_name,
+                        c.base_currency,
+                        c.gst_registered,
+                        c.max_users,
+                        c.status
+                    FROM companies c
+                    LEFT JOIN countries co
+                        ON co.id = c.country_id
+                    ORDER BY c.name
+                    `
+                );
+
+            const companies =
+                result.rows;
+
+            const viewData = {
+
+                companies,
+
+                permissions:
+                    req.session.user
+                        .permissions || [],
+
+                updatedId:
+                    req.session.updatedId
+            };
+
+            delete req.session.updatedId;
+
+            if (
+                req.headers['hx-request']
+            ) {
+
+                return res.render(
+                    'pages/settings/companies',
+                    {
+                        ...viewData,
+                        layout: false
+                    }
+                );
+
+            }
+
+            res.render(
+                'pages/settings/companies',
+                {
+                    title: 'Companies',
+                    activePage:
+                        'Companies',
+
+                    user:
+                        req.session.user,
+
+                    ...viewData
+                }
+            );
+
+        } catch (err) {
+
+            console.error(err);
+
+            res.status(500)
+                .send(
+                    'Error loading companies'
+                );
+
+        }
+
+    };
+
+exports.getAddCompany =
+    async (req, res) => {
+
+        try {
+
+            const countries =
+                await db.query(`
+                    SELECT
+                        id,
+                        name
+                    FROM countries
+                    ORDER BY name
+                `);
+
+            const currencies =
+                await db.query(`
+                    SELECT
+                        code,
+                        name
+                    FROM currencies
+                    ORDER BY code
+                `);
+
+            res.render(
+                'partials/company-form',
+                {
+                    layout: false,
+
+                    isEdit: false,
+
+                    company: {},
+
+                    countries:
+                        countries.rows,
+
+                    currencies:
+                        currencies.rows
+                }
+            );
+
+        } catch (err) {
+
+            console.error(err);
+
+            res.status(500)
+                .send(
+                    'Unable to load company form'
+                );
+
+        }
+
+    };
+
+exports.postAddCompany =
+    async (req, res) => {
+
+        try {
+
+            const {
+                name,
+                country_id,
+                base_currency,
+                status,
+                max_users,
+                financial_year_start,
+                gst_number
+            } = req.body;
+
+            const gst_registered =
+                req.body.gst_registered === 'on';
+
+            //=================================
+            // Validation
+            //=================================
+
+            if (
+                !name ||
+                !country_id ||
+                !base_currency ||
+                !status
+            ) {
+
+                return res
+                    .status(400)
+                    .send(
+                        'Please fill all required fields.'
+                    );
+
+            }
+
+            if (
+                gst_registered &&
+                !gst_number?.trim()
+            ) {
+
+                return res
+                    .status(400)
+                    .send(
+                        'GST Number is required.'
+                    );
+
+            }
+
+            //=================================
+            // Duplicate Name Check
+            //=================================
+
+            const duplicate =
+                await db.query(
+                    `
+                    SELECT id
+                    FROM companies
+                    WHERE LOWER(name) = LOWER($1)
+                    AND country_id = $2
+                    `,
+                    [name, country_id]
+                );
+
+            if (
+                duplicate.rows.length > 0
+            ) {
+
+                return res
+                    .status(400)
+                    .send(
+                        'Company already exists.'
+                    );
+
+            }
+
+            //=================================
+            // Insert
+            //=================================
+
+            const result =
+                await db.query(
+                    `
+                    INSERT INTO companies
+                    (
+                        name,
+                        country_id,
+                        base_currency,
+                        status,
+                        max_users,
+                        financial_year_start,
+                        gst_registered,
+                        gst_number
+                    )
+                    VALUES
+                    (
+                        $1,
+                        $2,
+                        $3,
+                        $4,
+                        $5,
+                        $6,
+                        $7,
+                        $8
+                    )
+                    RETURNING id
+                    `,
+                    [
+                        name.trim(),
+                        country_id,
+                        base_currency,
+                        status,
+                        max_users || 5,
+                        financial_year_start || null,
+                        gst_registered,
+                        gst_registered
+                            ? gst_number.trim()
+                            : null
+                    ]
+                );
+
+            req.session.updatedId =
+                result.rows[0].id;
+
+            return exports.getCompanies(
+                req,
+                res
+            );
+
+        } catch (err) {
+
+            if (
+                err.constraint ===
+                'ux_companies_country_name'
+            ) {
+
+                return res
+                    .status(400)
+                    .send(
+                        'Company already exists in this country.'
+                    );
+
+            }
+
+            if (
+                err.constraint ===
+                'ux_companies_country_gst'
+            ) {
+
+                return res
+                    .status(400)
+                    .send(
+                        'GST number already exists in this country.'
+                    );
+
+            }
+
+            console.error(err);
+
+            return res
+                .status(500)
+                .send(
+                    'Error creating company.'
+                );
+
+        }
+
+    };
+
+exports.getEditCompany =
+    async (req, res) => {
+
+        try {
+
+            const { id } =
+                req.params;
+
+            const companyResult =
+                await db.query(
+                    `
+                    SELECT
+                        id,
+                        name,
+                        gst_registered,
+                        gst_number,
+                        TO_CHAR(financial_year_start,'YYYY-MM-DD') AS financial_year_start,
+                        country_id,
+                        base_currency,
+                        status,
+                        max_users
+                    FROM companies
+                    WHERE id = $1
+                    `,
+                    [id]
+                );
+
+            if (
+                companyResult.rows.length === 0
+            ) {
+
+                return res
+                    .status(404)
+                    .send(
+                        'Company not found.'
+                    );
+
+            }
+
+            const countriesResult =
+                await db.query(
+                    `
+                    SELECT
+                        id,
+                        name
+                    FROM countries
+                    ORDER BY name
+                    `
+                );
+
+            const currenciesResult =
+                await db.query(
+                    `
+                    SELECT
+                        code,
+                        name
+                    FROM currencies
+                    ORDER BY code
+                    `
+                );
+
+            return res.render(
+                'partials/company-form',
+                {
+                    layout: false,
+
+                    isEdit: true,
+
+                    company:
+                        companyResult.rows[0],
+
+                    countries:
+                        countriesResult.rows,
+
+                    currencies:
+                        currenciesResult.rows
+                }
+            );
+
+        } catch (err) {
+
+            console.error(err);
+
+            return res
+                .status(500)
+                .send(
+                    'Error loading company.'
+                );
+
+        }
+
+    };
+
+exports.postEditCompany =
+    async (req, res) => {
+
+        try {
+
+            const { id } =
+                req.params;
+
+            const {
+                name,
+                country_id,
+                base_currency,
+                status,
+                max_users,
+                financial_year_start,
+                gst_number
+            } = req.body;
+
+            const gst_registered =
+                req.body.gst_registered ===
+                'on';
+
+
+            //console.log("gst_registered:", gst_registered)
+            //=========================
+            // Validation
+            //=========================
+
+            if (
+                !name ||
+                !country_id ||
+                !base_currency ||
+                !status
+            ) {
+
+                return res
+                    .status(400)
+                    .send(
+                        'Please fill all required fields.'
+                    );
+
+            }
+
+            if (
+                gst_registered &&
+                !gst_number?.trim()
+            ) {
+
+                return res
+                    .status(400)
+                    .send(
+                        'GST Number is required.'
+                    );
+
+            }
+
+            //=========================
+            // Duplicate Name Check
+            //=========================
+
+            const duplicateName =
+                await db.query(
+                    `
+                    SELECT id
+                    FROM companies
+                    WHERE lower(name)
+                        = lower($1)
+                    AND country_id = $2
+                    AND id <> $3
+                    `,
+                    [
+                        name,
+                        country_id,
+                        id
+                    ]
+                );
+
+            if (
+                duplicateName.rows.length >
+                0
+            ) {
+
+                return res
+                    .status(400)
+                    .send(
+                        'Company already exists in this country.'
+                    );
+
+            }
+
+            //=========================
+            // Duplicate GST Check
+            //=========================
+
+            if (
+                gst_registered &&
+                gst_number
+            ) {
+
+                const duplicateGST =
+                    await db.query(
+                        `
+                        SELECT id
+                        FROM companies
+                        WHERE gst_number = $1
+                        AND country_id = $2
+                        AND id <> $3
+                        `,
+                        [
+                            gst_number,
+                            country_id,
+                            id
+                        ]
+                    );
+
+                if (
+                    duplicateGST.rows
+                        .length > 0
+                ) {
+
+                    return res
+                        .status(400)
+                        .send(
+                            'GST Number already exists in this country.'
+                        );
+
+                }
+
+            }
+
+            //=========================
+            // Update
+            //=========================
+
+            await db.query(
+                `
+                UPDATE companies
+                SET
+                    name = $1,
+                    country_id = $2,
+                    base_currency = $3,
+                    status = $4,
+                    max_users = $5,
+                    financial_year_start = $6,
+                    gst_registered = $7,
+                    gst_number = $8,
+                    updated_at = NOW()
+                WHERE id = $9
+                `,
+                [
+                    name.trim(),
+                    country_id,
+                    base_currency,
+                    status,
+                    max_users || 5,
+                    financial_year_start ||
+                    null,
+                    gst_registered,
+                    gst_registered
+                        ? gst_number.trim()
+                        : null,
+                    id
+                ]
+            );
+
+            req.session.updatedId =
+                id;
+
+            return exports.getCompanies(
+                req,
+                res
+            );
+
+        } catch (err) {
+
+            if (
+                err.constraint ===
+                'ux_companies_country_name'
+            ) {
+
+                return res
+                    .status(400)
+                    .send(
+                        'Company already exists in this country.'
+                    );
+
+            }
+
+            if (
+                err.constraint ===
+                'ux_companies_country_gst'
+            ) {
+
+                return res
+                    .status(400)
+                    .send(
+                        'GST Number already exists in this country.'
+                    );
+
+            }
+
+            console.error(err);
+
+            return res
+                .status(500)
+                .send(
+                    'Error updating company.'
+                );
+
+        }
+
+    };
+
+
+//Company->Users
+
+exports.getCompanyUsers =
+    async (req, res) => {
+
+        try {
+
+            const { id } =
+                req.params;
+
+            const companyResult =
+                await db.query(
+                    `
+                    SELECT
+                        id,
+                        name
+                    FROM companies
+                    WHERE id = $1
+                    `,
+                    [id]
+                );
+
+            if (
+                companyResult.rows.length === 0
+            ) {
+
+                return res
+                    .status(404)
+                    .send(
+                        'Company not found.'
+                    );
+
+            }
+
+            const usersResult =
+                await db.query(
+                    `
+                    SELECT
+                        u.id,
+                        u.name,
+                        u.email,
+                        u.is_active,
+                        r.role_name
+                    FROM users u
+                    LEFT JOIN roles r
+                        ON r.id = u.role_id
+                    WHERE u.company_id = $1
+                    ORDER BY u.name
+                    `,
+                    [id]
+                );
+
+            const viewData = {
+
+                company:
+                    companyResult.rows[0],
+
+                users:
+                    usersResult.rows,
+
+                permissions:
+                    req.session.user
+                        .permissions || [],
+
+                updatedId:
+                    req.session.updatedId
+            };
+
+            delete req.session.updatedId;
+
+            if (req.headers['hx-request']) {
+
+                return res.render(
+                    'pages/settings/company-users',
+                    {
+                        layout: false,
+                        ...viewData
+                    }
+                );
+
+            }
+
+            return res.render(
+                'pages/settings/company-users',
+                {
+                    title: 'Company Users',
+                    activePage: 'Settings',
+                    ...viewData
+                }
+            );
+
+        } catch (err) {
+
+            console.error(err);
+
+            return res
+                .status(500)
+                .send(
+                    'Error loading users.'
+                );
+
+        }
+
+    };

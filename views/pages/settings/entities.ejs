@@ -58,7 +58,8 @@
                 'entity', 
                 ${entity.id}, 
                 '${entity.entity_type}',
-                '${entity.name.replace(/'/g, '\\\'')}'
+                '${entity.name.replace(/'/g, '\\\'')}',
+                '${entity.contact_count}'
             )" ${disableDelete ? 'disabled' : '' }
                 title="${!permissions.includes('entities.delete')? 'No permission': ''}">
 

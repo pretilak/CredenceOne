@@ -39,11 +39,8 @@
 
 
                 <input type="email" name="email" value="<%= user.email || '' %>" required
-                    hx-post="/settings/users/validate-email" 
-                    hx-trigger="input changed delay:500ms" 
-                    hx-target="#emailValidation"
-                    hx-swap="innerHTML" 
-                    hx-include="[name='email'], [name='user_id']">
+                    hx-post="/settings/users/validate-email" hx-trigger="input changed delay:500ms"
+                    hx-target="#emailValidation" hx-swap="innerHTML" hx-include="[name='email'], [name='user_id']">
 
             </div>
             <div id="emailValidation" class="validation-message form-full">&nbsp;</div>
@@ -66,28 +63,36 @@
 
                     <% } else { %>
 
-                        <select name="company_id" required>
+                        <select name="company_id" required <%=companyId ? 'disabled' : '' %>>
 
                             <option value="">
                                 Select Company
                             </option>
 
-                            <% companies.forEach(c=> { %>
+                            <% companies.forEach(company=> { %>
 
-                                <option value="<%= c.id %>" <%=user.company_id==c.id ? 'selected' : '' %>>
+                                <option value="<%= company.id %>" <%=( companyId==company.id ||
+                                    user.company_id==company.id ) ? 'selected' : '' %>>
 
-                                    <%= c.name %>
+                                    <%= company.name %>
 
                                 </option>
 
                                 <% }) %>
 
                         </select>
+                        <% if (companyId) { %>
+
+                            <input type="hidden" name="company_id" value="<%= companyId %>">
 
                         <% } %>
 
+                    <% } %>
+
             </div>
 
+            <input type="hidden" name="return_company_id" value="<%= companyId || '' %>">
+            
             <!-- ============================= -->
             <!-- Role -->
             <!-- ============================= -->

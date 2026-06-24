@@ -1,69 +1,49 @@
-<% function renderRoles() { let rows='' ; roles.forEach(role=> {
+<% function renderUsers() { let rows='' ; users.forEach(user=> {
 
     const disableEdit =
-    !permissions.includes('roles.edit') ||
-    role.is_system;
+    !permissions.includes('users.edit');
 
     const disableDelete =
-    !permissions.includes('roles.delete') ||
-    role.is_system ||
-    role.has_users;
+    !permissions.includes('users.delete');
 
     rows += `
 
-    <tr id="role-${role.id}" class="${
-            updatedId == role.id
+    <tr id="user-${user.id}" class="${
+            updatedId == user.id
                 ? 'updated-row'
                 : ''
         }">
 
         <td>
-            ${role.role_code}
+            ${user.name || ''}
         </td>
 
         <td>
-            ${role.role_name}
+            ${user.email}
         </td>
 
         <td>
-            ${role.is_active ? 'Yes' : 'No'}
+            ${user.role_name}
         </td>
 
         <td>
-            ${role.is_system ? 'Yes' : 'No'}
+            ${user.is_active ? 'Yes' : 'No'}
+        </td>
+
+        <td>
+            ${user.is_2fa_enabled ? 'Yes' : 'No'}
         </td>
 
         <td>
 
-            <button class="btn-secondary" hx-get="/settings/roles/${role.id}/edit" hx-target="#modal"
+            <button class="btn-secondary" hx-get="/settings/users/${user.id}/edit" hx-target="#modal"
                 hx-swap="innerHTML" ${disableEdit ? 'disabled' : '' } title="${
-                        !permissions.includes('roles.edit')
+                        !permissions.includes('users.edit')
                             ? 'No permission'
-                            : role.is_system
-                                ? 'System Role'
-                                : ''
+                            : ''
                     }">
 
                 Edit
-
-            </button>
-
-            <button class="btn-secondary" onclick="openDeleteModal(
-                        'role',
-                        ${role.id},
-                        '${role.role_code}',
-                        '${role.role_name.replace(/'/g, '\\\'')}'
-                    )" ${disableDelete ? 'disabled' : '' } title="${
-                        !permissions.includes('roles.delete')
-                            ? 'No permission'
-                            : role.is_system
-                                ? 'System Role'
-                                : role.has_users
-                                    ? 'Role assigned to users'
-                                    : ''
-                    }">
-
-                Delete
 
             </button>
 
@@ -84,11 +64,12 @@
 
             <colgroup>
 
-                <col style="width: 20%">
-                <col style="width: 40%">
-                <col style="width: 10%">
-                <col style="width: 10%">
-                <col style="width: 20%">
+                <col style="width: 24%">
+                <col style="width: 28%">
+                <col style="width: 22%">
+                <col style="width: 8%">
+                <col style="width: 6%">
+                <col style="width: 12%">
 
             </colgroup>
 
@@ -100,34 +81,41 @@
 
                 <tr class="action-row">
 
-                    <th colspan="5">
+                    <th colspan="7">
 
                         <div class="action-row-content">
 
                             <span class="title">
-
-                                Roles
-
+                                Users -
+                                <%= company.name %>
                             </span>
 
-                            <span class="toolbar-actions">
+                            <div class="toolbar-actions">
 
-                                <input type="text" id="tableFilter" placeholder="Search roles...">
+                                <input type="text" id="tableFilter" placeholder="Search...">
 
-                                <% if (permissions.includes('roles.create')) { %>
+                                <button class="btn-secondary" hx-get="/settings/companies" hx-target="#main-content"
+                                    hx-swap="innerHTML" hx-push-url="true">
 
-                                    <button class="btn-primary" hx-get="/settings/roles/add" hx-target="#modal"
-                                        hx-swap="innerHTML">
+                                    ← Back
 
-                                        +Add
+                                </button>
+
+                                <% if (permissions.includes('users.create')) { %>
+
+                                    <button class="btn-primary" hx-get="/settings/users/add?companyId=<%= company.id %>"
+                                        hx-target="#modal" hx-swap="innerHTML">
+
+                                        + Add User
 
                                     </button>
 
                                     <% } %>
 
-                            </span>
+                            </div>
 
                         </div>
+
 
                     </th>
 
@@ -139,13 +127,15 @@
 
                 <tr class="header-row">
 
-                    <th class="sortable">Role Code</th>
+                    <th class="sortable">Name</th>
 
-                    <th class="sortable">Role Name</th>
+                    <th class="sortable">Email</th>
+
+                    <th class="sortable">Role</th>
 
                     <th>Active</th>
 
-                    <th>System</th>
+                    <th>2FA</th>
 
                     <th>Action</th>
 
@@ -153,13 +143,9 @@
 
             </thead>
 
-            <!-- ========================================= -->
-            <!-- Body -->
-            <!-- ========================================= -->
-
             <tbody>
 
-                <%- renderRoles() %>
+                <%- renderUsers() %>
 
             </tbody>
 
@@ -168,36 +154,23 @@
     </div>
 
     <script>
-
-        setTimeout(
-            scrollToUpdatedRow,
-            100
-        );
-
+        initTablePage();
     </script>
 
     <script>
-
-        initTablePage();
-
         enableTableFilter(
             '#tableFilter',
             'tbody tr'
         );
+    </script>
 
+    <script>
         enableTableSorting(
             '.table-container table'
         );
-
     </script>
 
     <style>
-        .btn-secondary:disabled {
-
-            cursor: not-allowed;
-
-        }
-
         /* ========================================= */
         /* Header Layout */
         /* ========================================= */
@@ -235,6 +208,7 @@
             font-size: 13px;
         }
 
+
         /* ========================================= */
         /* Page Title */
         /* ========================================= */
@@ -248,15 +222,16 @@
             color: #1e293b;
         }
 
+
         /* ========================================= */
-        /* Buttons */
+        /* Primary Button */
         /* ========================================= */
 
         .btn-primary {
 
             background-color: #007bff;
 
-            color: white;
+            color: #ffffff;
 
             border: none;
 
@@ -264,14 +239,13 @@
 
             border-radius: 4px;
 
-            font-size: 13px;
-
             font-weight: 600;
+
+            font-size: 13px;
 
             cursor: pointer;
 
-            transition:
-                background-color 0.15s ease;
+            transition: background-color 0.15s ease-in-out;
         }
 
         .btn-primary:hover {
@@ -280,30 +254,19 @@
         }
 
         .btn-secondary {
-
             background-color: #f8fafc;
-
             color: #475569;
-
             border: 1px solid #cbd5e1;
-
             padding: 6px 14px;
-
             border-radius: 4px;
-
             font-size: 13px;
-
             font-weight: 500;
-
             cursor: pointer;
-
-            transition: all 0.15s ease;
+            transition: all 0.15s ease-in-out;
         }
 
         .btn-secondary:hover {
-
             background-color: #e2e8f0;
-
             color: #0f172a;
         }
 
@@ -319,10 +282,24 @@
 
             border-spacing: 0;
 
-            table-layout: fixed;
-
             font-family: sans-serif;
+
+            table-layout: fixed;
         }
+
+        table tbody tr {
+            transition:
+                background-color 0.15s ease;
+        }
+
+        table tbody tr:hover td {
+            background-color:
+                #b5d5f5;
+        }
+
+        /* ========================================= */
+        /* Sticky Header */
+        /* ========================================= */
 
         thead {
 
@@ -332,6 +309,11 @@
 
             z-index: 2;
         }
+
+
+        /* ========================================= */
+        /* Action Row */
+        /* ========================================= */
 
         .action-row th {
 
@@ -344,6 +326,11 @@
             border-bottom: 1px solid #ccc;
         }
 
+
+        /* ========================================= */
+        /* Header Row */
+        /* ========================================= */
+
         .header-row th {
 
             background-color: #333;
@@ -354,6 +341,11 @@
 
             text-align: left;
         }
+
+
+        /* ========================================= */
+        /* Cells */
+        /* ========================================= */
 
         td {
 
@@ -368,28 +360,81 @@
             white-space: nowrap;
         }
 
+
+        /* ========================================= */
+        /* Zebra */
+        /* ========================================= */
+
         tr:nth-child(even) {
 
             background-color: #f9f9f9;
         }
 
-        table tbody tr {
 
-            transition:
-                background-color 0.15s ease;
+        /* ========================================= */
+        /* Name Column Wrap */
+        /* ========================================= */
+
+        td:first-child {
+
+            white-space: normal;
         }
 
-        table tbody tr:hover td {
 
-            background-color:
-                #b5d5f5;
+        /* ========================================= */
+        /* Action Buttons */
+        /* ========================================= */
+
+        td:last-child {
+
+            white-space: nowrap;
         }
+
+        /* ========================================= */
+        /* Toolbar */
+        /* ========================================= */
+
+        .toolbar {
+
+            display: flex;
+
+            justify-content: flex-end;
+
+            align-items: center;
+
+            padding: 10px;
+
+            background-color: #f8fafc;
+
+            border-bottom: 1px solid #e2e8f0;
+        }
+
 
         /* ========================================= */
         /* Search Box */
         /* ========================================= */
 
-        .toolbar-actions input:focus {
+        .toolbar input[type="text"] {
+
+            width: 280px;
+
+            padding: 8px 12px;
+
+            border: 1px solid #cbd5e1;
+
+            border-radius: 4px;
+
+            font-size: 13px;
+
+            background-color: white;
+
+            transition:
+                border-color 0.15s ease,
+                box-shadow 0.15s ease;
+        }
+
+
+        .toolbar input[type="text"]:focus {
 
             outline: none;
 
@@ -399,15 +444,15 @@
                 0 0 0 3px rgba(0, 123, 255, 0.15);
         }
 
-        .toolbar-actions input::placeholder {
+
+        .toolbar input[type="text"]::placeholder {
 
             color: #94a3b8;
         }
 
-        /* ========================================= */
-        /* Sorting */
-        /* ========================================= */
-
+        /*=========================================*/
+        /*============ Sorting ====================*/
+        /*=========================================*/
         .sortable {
 
             cursor: pointer;
@@ -415,7 +460,6 @@
             user-select: none;
 
             position: relative;
-
         }
 
         .sortable:hover {
@@ -425,20 +469,15 @@
 
         .sortable[data-sort="asc"]::after {
 
-            content: "▲";
+            content: " ▲";
 
             font-size: 10px;
         }
 
         .sortable[data-sort="desc"]::after {
 
-            content: "▼";
+            content: " ▼";
 
             font-size: 10px;
-        }
-
-        td:first-child {
-
-            white-space: normal;
         }
     </style>
