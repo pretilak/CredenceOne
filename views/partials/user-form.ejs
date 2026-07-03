@@ -21,13 +21,16 @@
             <!-- Name -->
             <!-- ============================= -->
 
+        <% 
+        const nameInputHtml = `
             <div class="form-group">
-
                 <label>Name</label>
-
-                <input type="text" name="name" value="<%= user.name || '' %>" required>
-
+                <input type="text" name="name" value="${user.name || ''}" required>
             </div>
+        `; 
+        %>
+
+            <%- nameInputHtml %>
 
             <!-- ============================= -->
             <!-- Email -->
@@ -53,46 +56,49 @@
 
             <div class="form-group">
 
-                <label>Company</label>
+                <!--===================-->
 
-
-                <% if (isEdit) { %>
-
-                    <input type="text" value="<%= companies.find(c => c.id == user.company_id)?.name || '' %>" readonly>
-                    <input type="hidden" name="company_id" value="<%= user.company_id || '' %>">
+                <% if (showCompanyField) { %>
+                    <label>Company</label>
+                    <% if (isEdit) { %>
+                        <input type="text" value="<%= companies.find(c => c.id == user.company_id)?.name || '' %>"
+                            readonly>
+                        <input type="hidden" name="company_id" value="<%= user.company_id || '' %>">
 
                     <% } else { %>
-
                         <select name="company_id" required <%=companyId ? 'disabled' : '' %>>
-
                             <option value="">
                                 Select Company
                             </option>
 
                             <% companies.forEach(company=> { %>
-
                                 <option value="<%= company.id %>" <%=( companyId==company.id ||
                                     user.company_id==company.id ) ? 'selected' : '' %>>
-
                                     <%= company.name %>
-
                                 </option>
-
                                 <% }) %>
-
                         </select>
+
                         <% if (companyId) { %>
-
                             <input type="hidden" name="company_id" value="<%= companyId %>">
-
-                        <% } %>
+                            <% } %>
 
                     <% } %>
+
+                <% } else { %>
+
+                                            <input type="hidden" name="company_id" value="<%= companyId %>">
+
+                                            <% } %>
+
+                <!--===================-->
+
+
 
             </div>
 
             <input type="hidden" name="return_company_id" value="<%= companyId || '' %>">
-            
+
             <!-- ============================= -->
             <!-- Role -->
             <!-- ============================= -->
@@ -395,7 +401,9 @@
                 }
             }
         }
-    );</script>
+    );
+    
+    </script>
 
 <style>
     .form-error {

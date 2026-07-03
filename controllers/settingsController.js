@@ -1,6 +1,6 @@
 const db = require("../config/db");
 const { getAccountEditContext } = require('../utils/accountHelper');
-
+const { getAllowedScopes, getRolePermissions, getValidPermissions } = require('../helpers/permissionHelper');
 
 
 exports.getCoa = async (req, res, updatedId = null) => {
@@ -309,7 +309,7 @@ exports.deleteAccount = async (req, res) => {
     const companyId = req.session.user.company_id;
     const id = req.params.id;
 
-    console.log("Delete acc id:", id);
+    //console.log("Delete acc id:", id);
 
     // -------------------------------
     // 1. Fetch account
@@ -1477,6 +1477,8 @@ exports.getUsers = async (req, res, updatedId = null) => {
 
         LEFT JOIN companies c
             ON c.id = u.company_id
+        
+        WHERE r.role_code <> 'appadmin'
     `;
 
     const params = [];
@@ -1488,13 +1490,13 @@ exports.getUsers = async (req, res, updatedId = null) => {
     } else if (currentRole === 'superuser') {
 
         query += `
-            WHERE r.role_scope = 'company'
+            AND r.role_scope = 'company'
         `;
 
     } else if (currentRole === 'companyadmin') {
 
         query += `
-            WHERE u.company_id = $1
+            AND u.company_id = $1
             AND r.role_code NOT IN ('companyadmin')
         `;
 
@@ -1557,12 +1559,28 @@ exports.getAddUser = async (req, res) => {
         await db.query(`
             SELECT
                 id,
-                role_code,
                 role_name,
+                role_code,
                 role_scope
             FROM roles
-            ORDER BY role_name
-        `);
+            WHERE
+            (
+                $1 = 'appadmin'
+                AND role_code <> 'appadmin'
+            )
+            OR
+            (
+                $1 = 'superuser'
+                AND role_scope = 'company'
+            )
+            OR
+            (
+                $1 = 'companyadmin'
+                AND role_scope = 'company'
+                AND role_code <> 'companyadmin'
+            )
+            ORDER BY role_name;
+            `, [req.session.user.role_code]);
 
     const companies =
         await db.query(`
@@ -1573,25 +1591,24 @@ exports.getAddUser = async (req, res) => {
             ORDER BY name
         `);
 
-    const companyId =
-        req.query.companyId || '';
+    const companyId = req.query.companyId || '';
+
+    const isCompanyAdmin = req.session.user.role_code === 'companyadmin';
+
+    showCompanyField = req.session.user.role_scope === 'platform';
+
+    //console.log("roleScope:", roleScope);
 
     res.render(
-        'partials/user-form',
+        'partials/user-form1',
         {
             layout: false,
-
             isEdit: false,
-
             user: {},
-
             roles: roles.rows,
-
+            showCompanyField,
             companies: companies.rows,
-
-            companyId: companyId,
-
-            isEdit: false
+            companyId: isCompanyAdmin ? req.session.user.company_id : companyId,
         }
     );
 
@@ -1788,7 +1805,8 @@ exports.getEditUser = async (req, res) => {
             `
             SELECT
                 u.*,
-                r.role_scope
+                r.role_scope,
+                r.role_code
             FROM users u
             JOIN roles r
                 ON r.id = u.role_id
@@ -1798,29 +1816,48 @@ exports.getEditUser = async (req, res) => {
         );
 
     if (!userResult.rows.length) {
-
         return res
             .status(404)
             .send('User not found');
-
     }
 
-    const user =
-        userResult.rows[0];
+    const user = userResult.rows[0];
+    
+    if (user.role_code === 'appadmin') {
+        return res
+            .status(403)
+            .send('Application Administrator cannot be edited.');
+    }
 
     const companyId = user.companyId;
 
-    const roles =
+        const roles =
         await db.query(`
             SELECT
                 id,
-                role_code,
                 role_name,
+                role_code,
                 role_scope
             FROM roles
-            WHERE role_scope = $1
-            ORDER BY role_name
-        `, [user.role_scope]);
+            WHERE
+            (
+                $1 = 'appadmin'
+                AND role_code <> 'appadmin'
+            )
+            OR
+            (
+                $1 = 'superuser'
+                AND role_scope = 'company'
+            )
+            OR
+            (
+                $1 = 'companyadmin'
+                AND role_scope = 'company'
+                AND role_code <> 'companyadmin'
+            )
+            ORDER BY role_name;
+            `, [req.session.user.role_code]);
+
 
     const companies =
         await db.query(`
@@ -1831,14 +1868,17 @@ exports.getEditUser = async (req, res) => {
             ORDER BY name
         `);
 
+    const isCompanyAdmin = req.session.user.role_code === 'companyadmin';
+
     res.render(
-        'partials/user-form',
+        'partials/user-form1',
         {
             layout: false,
             isEdit: true,
             user,
             roles: roles.rows,
             companies: companies.rows,
+            showCompanyField: !isCompanyAdmin,
             companyId: user.companyId || ''
         }
     );
@@ -1846,8 +1886,6 @@ exports.getEditUser = async (req, res) => {
 };
 
 exports.updateUser = async (req, res) => {
-
-    //console.log(req.body);
 
     try {
 
@@ -1875,6 +1913,7 @@ exports.updateUser = async (req, res) => {
                 ]
             );
 
+
         if (existingEmailUser.rows.length) {
 
             return res
@@ -1888,7 +1927,8 @@ exports.updateUser = async (req, res) => {
                 `
                 SELECT
                     u.*,
-                    r.role_scope
+                    r.role_scope,
+                    r.role_code
                 FROM users u
                 JOIN roles r
                     ON r.id = u.role_id
@@ -1897,12 +1937,16 @@ exports.updateUser = async (req, res) => {
                 [userId]
             );
 
-        if (!existingUser.rows.length) {
+        if (existingUser.role_code === 'appadmin') {
+            return res
+                .status(403)
+                .send('Application Administrator cannot be modified.');
+        }
 
+        if (!existingUser.rows.length) {
             return res
                 .status(404)
                 .send('User not found');
-
         }
 
         const currentUser =
@@ -2004,6 +2048,12 @@ exports.validateEmail = async (req, res) => {
         user_id
     } = req.body;
 
+    if (
+        email.trim() === '' 
+        ) {
+            return res.send('&nbsp;');
+        }
+
     if (user_id) {
 
         const currentUser =
@@ -2015,7 +2065,7 @@ exports.validateEmail = async (req, res) => {
             `,
                 [user_id]
             );
-
+        
         if (
             currentUser.rows.length &&
             currentUser.rows[0].email.toLowerCase() ===
@@ -2060,12 +2110,380 @@ exports.validateEmail = async (req, res) => {
 
 };
 
-//Companies
-//const db = require('../config/db');
 
-//=========================================
-// List Companies
-//=========================================
+exports.getEditUserPermissions = async (req, res) => {
+
+    try {
+
+        const userId = req.params.id;
+
+        //====================================================
+        // Get User
+        //====================================================
+
+        const userResult = await db.query(
+            `
+            SELECT
+                u.id,
+                u.name,
+                u.email,
+                u.role_id,
+                r.role_name,
+                r.role_code,
+                r.role_scope
+            FROM users u
+            JOIN roles r
+                ON r.id = u.role_id
+            WHERE u.id = $1
+            `,
+            [userId]
+        );
+
+        if (userResult.rows.length === 0) {
+
+            return res
+                .status(404)
+                .send("User not found");
+
+        }
+
+        const user =
+            userResult.rows[0];
+
+        //====================================================
+        // Determine Applicable Permission Scopes
+        //====================================================
+
+/*         const allowedScopes =
+            user.role_scope === 'platform'
+                ? ['platform', 'both']
+                : ['company', 'both']; */
+
+        const allowedScopes =
+            getAllowedScopes(user.role_scope);
+
+        //====================================================
+        // Get Effective Permissions
+        //====================================================
+
+        const permissionResult =
+            await db.query(
+                `
+                SELECT
+
+                    p.id,
+                    p.module_name,
+                    p.permission_name,
+                    p.permission_code,
+                    p.delegation_scope,
+
+                    CASE
+
+                        WHEN up.is_allowed IS NOT NULL
+                            THEN up.is_allowed
+
+                        WHEN rp.permission_id IS NOT NULL
+                            THEN true
+
+                        ELSE false
+
+                    END AS assigned
+
+                FROM permissions p
+
+                LEFT JOIN role_permissions rp
+                    ON rp.permission_id = p.id
+                   AND rp.role_id = $1
+
+                LEFT JOIN user_permissions up
+                    ON up.permission_id = p.id
+                   AND up.user_id = $2
+
+                WHERE p.delegation_scope = ANY($3)
+
+                ORDER BY
+                    p.module_name,
+                    CASE split_part(p.permission_name, ' ', 1)
+                        WHEN 'View' THEN 1
+                        WHEN 'Create' THEN 2
+                        WHEN 'Edit' THEN 3
+                        WHEN 'Delete' THEN 4
+                        ELSE 99
+                    END,
+                    p.permission_name
+                `,
+                [
+                    user.role_id,
+                    userId,
+                    allowedScopes
+                ]
+            );
+
+        //====================================================
+        // Group by Module
+        //====================================================
+
+        const groupedPermissions = {};
+
+        permissionResult.rows.forEach(permission => {
+
+            if (
+                !groupedPermissions[
+                    permission.module_name
+                ]
+            ) {
+
+                groupedPermissions[
+                    permission.module_name
+                ] = [];
+
+            }
+
+            groupedPermissions[
+                permission.module_name
+            ].push(permission);
+
+        });
+
+        //====================================================
+        // Render
+        //====================================================
+
+        const viewData = {
+
+            user: req.session.user,
+            selectedUser: user,
+            groupedPermissions
+
+        };
+
+        if (req.headers['hx-request']) {
+
+            return res.render(
+                'pages/settings/user-permissions',
+                {
+                    layout: false,
+                    ...viewData
+                }
+            );
+
+        }
+
+        return res.render(
+            'pages/settings/user-permissions',
+            {
+                title: 'User Permissions',
+                activePage: 'Users',
+                ...viewData
+            }
+        );
+
+    }
+    catch (err) {
+
+        console.error(err);
+
+        return res
+            .status(500)
+            .send("Error loading user permissions");
+
+    }
+
+};
+
+
+exports.postEditUserPermissions = async (req, res) => {
+
+    const client = await db.connect();
+
+    try {
+
+        await client.query("BEGIN");
+
+        const userId = req.params.id;
+
+        //====================================================
+        // Selected Permissions
+        //====================================================
+
+        const selectedPermissionSet = new Set(
+            [].concat(req.body.permissions || []).map(Number)
+        );
+
+        //====================================================
+        // Get User Role
+        //====================================================
+
+        const userResult = await client.query(
+            `
+            SELECT
+                role_id,
+                r.role_scope
+            FROM users u
+            JOIN roles r
+                ON r.id = u.role_id
+            WHERE u.id = $1
+            `,
+            [userId]
+        );
+
+        if (userResult.rows.length === 0) {
+
+            throw new Error("User not found");
+
+        }
+
+        const {
+            role_id: roleId,
+            role_scope: roleScope
+        } = userResult.rows[0];
+
+        const allowedScopes =
+            getAllowedScopes(roleScope);
+
+        //====================================================
+        // Get Role Permissions
+        //====================================================
+
+        const rolePermissions = await getRolePermissions(client, roleId, allowedScopes);
+
+        //====================================================
+        // Get Valid Permission IDs
+        //====================================================
+
+        const validPermissions = await getValidPermissions(client, allowedScopes);
+
+/*         const permissionResult =
+            await client.query(
+                `
+                SELECT id
+
+                FROM permissions
+
+                WHERE delegation_scope = ANY($1)
+                `,
+                [allowedScopes]
+            );
+
+        const validPermissionSet = new Set(
+            permissionResult.rows.map(r =>
+                Number(r.id)
+            )
+        );
+ */
+        //====================================================
+        // Build Overrides
+        //====================================================
+
+        const permissionIds = new Set([
+            ...rolePermissions,
+            ...selectedPermissionSet
+        ]);
+
+        const values = [];
+
+        for (const permissionId of permissionIds) {
+
+            // Ignore invalid/tampered permissions
+
+            if (!validPermissions.has(permissionId)) {
+
+                continue;
+
+            }
+
+            const roleHasPermission =
+                rolePermissions.has(permissionId);
+
+            const userHasPermission =
+                selectedPermissionSet.has(permissionId);
+
+            // Store only differences
+
+            if (roleHasPermission !== userHasPermission) {
+
+                values.push([
+                    userId,
+                    permissionId,
+                    userHasPermission
+                ]);
+
+            }
+
+        }
+
+        //====================================================
+        // Replace Existing Overrides
+        //====================================================
+
+        await client.query(
+            `
+            DELETE
+            FROM user_permissions
+            WHERE user_id = $1
+            `,
+            [userId]
+        );
+
+        //====================================================
+        // Bulk Insert
+        //====================================================
+
+        if (values.length > 0) {
+
+            const placeholders = values
+                .map((_, i) => {
+
+                    const p = i * 3;
+
+                    return `($${p + 1}, $${p + 2}, $${p + 3})`;
+
+                })
+                .join(", ");
+
+            const params =
+                values.flat();
+
+            await client.query(
+                `
+                INSERT INTO user_permissions
+                (
+                    user_id,
+                    permission_id,
+                    is_allowed
+                )
+                VALUES
+                ${placeholders}
+                `,
+                params
+            );
+
+        }
+
+        await client.query("COMMIT");
+
+        return this.getUsers(req, res);
+
+    }
+    catch (err) {
+
+        await client.query("ROLLBACK");
+
+        console.error(err);
+
+        return res
+            .status(500)
+            .send("Unable to save user permissions");
+
+    }
+    finally {
+
+        client.release();
+
+    }
+
+};
+
 
 exports.getCompanies =
     async (req, res) => {
@@ -2146,7 +2564,7 @@ exports.getCompanies =
 
         }
 
-    };
+};
 
 exports.getAddCompany =
     async (req, res) => {
@@ -2679,7 +3097,6 @@ exports.postEditCompany =
 
 
 //Company->Users
-
 exports.getCompanyUsers =
     async (req, res) => {
 
@@ -2782,3 +3199,476 @@ exports.getCompanyUsers =
         }
 
     };
+
+//Permissions
+exports.getRolePermissions = async (req, res) => {
+
+    try {
+
+        const result = await db.query(
+            `
+            SELECT
+                id,
+                role_name,
+                role_code,
+                is_system
+            FROM roles
+            ORDER BY role_name
+            `
+        );
+
+        const updatedId =
+            req.session.updatedId;
+
+        delete req.session.updatedId;
+
+        const viewData = {
+
+            roles:
+                result.rows,
+
+            updatedId,
+
+            permissions:
+                req.session.user.permissions
+        };
+
+        if (
+            req.headers['hx-request']
+        ) {
+
+            return res.render(
+                'pages/settings/permissions',
+                {
+                    layout: false,
+                    ...viewData
+                }
+            );
+
+        }
+
+        return res.render(
+            'pages/settings/permissions',
+            {
+                title: 'Permissions',
+                activePage: 'Permissions',
+                user: req.session.user,
+                ...viewData
+            }
+        );
+
+    } catch (err) {
+
+        console.error(err);
+
+        return res
+            .status(500)
+            .send(
+                'Error loading permissions.'
+            );
+
+    }
+
+};
+
+exports.getEditRolePermissions = async (req, res) => {
+
+    try {
+
+        const signedInUser = req.session.user;
+        //const canManageDelegation = req.session.user.role_scope === 'platform'; 
+        const canManageDelegation = signedInUser.permissions.includes('permissions.manage');
+
+        //const userRoleScope = signedInUser.role_scope;
+
+        //console.log("userRoleScope:", userRoleScope);
+
+        const { id } =
+            req.params;
+
+        const roleResult =
+            await db.query(
+                `
+                SELECT
+                    id,
+                    role_name,
+                    role_code,
+                    is_system,
+                    role_scope
+                FROM roles
+                WHERE id = $1
+                `,
+                [id]
+            );
+
+        if (
+            roleResult.rows.length === 0
+        ) {
+
+            return res
+                .status(404)
+                .send(
+                    'Role not found.'
+                );
+
+        };
+
+        const role =
+            roleResult.rows[0];
+
+        const allowedScopes =
+            role.role_scope === 'platform'
+            ? ['platform', 'both']
+            : ['company', 'both'];
+
+        const permissionsResult =
+            await db.query(
+                `
+                SELECT
+                    p.id,
+                    p.permission_code,
+                    p.permission_name,
+                    SPLIT_PART(p.permission_name, ' ', 1) AS action_name,
+                    p.module_name,
+                    p.delegation_scope,
+
+                    CASE
+                        WHEN rp.role_id IS NULL
+                        THEN false
+                        ELSE true
+                    END AS assigned
+
+                FROM permissions p
+
+                LEFT JOIN role_permissions rp
+                    ON rp.permission_id = p.id
+                   AND rp.role_id = $1
+
+                WHERE p.delegation_scope = ANY($2)
+
+                ORDER BY
+                    p.module_name,
+                    CASE split_part(p.permission_name, ' ', 1)
+                        WHEN 'View' THEN 1
+                        WHEN 'Create' THEN 2
+                        WHEN 'Edit' THEN 3
+                        WHEN 'Delete' THEN 4
+                        ELSE 99
+                    END,
+                    p.permission_name;`,
+                [id, allowedScopes]
+            );
+
+        const permissions =
+            permissionsResult.rows;
+
+        //console.log(permissions);
+
+        const groupedPermissions =
+            permissions.reduce(
+                (
+                    groups,
+                    permission
+                ) => {
+
+                    if (
+                        !groups[
+                        permission.module_name
+                        ]
+                    ) {
+
+                        groups[
+                            permission.module_name
+                        ] = [];
+
+                    }
+
+                    groups[
+                        permission.module_name
+                    ].push(
+                        permission
+                    );
+
+                    return groups;
+
+                },
+                {}
+            );
+
+        //console.log("canManageDelegation:", canManageDelegation);
+
+        //=========================================
+        if (
+            req.headers['hx-request']
+        ) {
+
+            return res.render(
+                'pages/settings/role-permissions',
+                {
+                    layout: false,
+                    role,
+                    groupedPermissions,
+                    canManageDelegation
+                }
+            );
+
+        }
+
+        return res.render(
+            'pages/settings/role-permissions',
+            {
+                title: 'Role-Permissions',
+                activePage: 'Permissions',
+                role,
+                groupedPermissions
+            }
+        );
+        //=========================================
+
+
+    } catch (err) {
+
+        console.error(err);
+
+        return res
+            .status(500)
+            .send(
+                'Error loading permissions.'
+            );
+
+    }
+
+};
+
+exports.postEditRolePermissions = async (req, res) => {
+
+    const client = await db.connect();
+
+    try {
+
+        await client.query("BEGIN");
+
+        const roleId = req.params.id;
+
+        //====================================================
+        // Selected Permissions
+        //====================================================
+
+        const selectedPermissions = new Set(
+            [].concat(req.body.permissions || []).map(Number)
+        );
+
+        //====================================================
+        // Get Role Scope
+        //====================================================
+
+        const roleResult = await client.query(
+            `
+            SELECT role_scope
+            FROM roles
+            WHERE id = $1
+            `,
+            [roleId]
+        );
+
+        if (roleResult.rows.length === 0) {
+
+            throw new Error("Role not found");
+
+        }
+
+        const allowedScopes =
+            roleResult.rows[0].role_scope === 'platform'
+                ? ['platform', 'both']
+                : ['company', 'both'];
+
+        //====================================================
+        // Validate Submitted Permissions
+        //====================================================
+
+        const validPermissionResult =
+            await client.query(
+                `
+                SELECT id
+                FROM permissions
+                WHERE delegation_scope = ANY($1)
+                `,
+                [allowedScopes]
+            );
+
+        const validPermissionSet = new Set(
+            validPermissionResult.rows.map(
+                p => Number(p.id)
+            )
+        );
+
+        const values = [];
+
+        for (const permissionId of selectedPermissions) {
+
+            if (validPermissionSet.has(permissionId)) {
+
+                values.push([
+                    roleId,
+                    permissionId
+                ]);
+
+            }
+
+        }
+
+        //====================================================
+        // Replace Existing Role Permissions
+        //====================================================
+
+        await client.query(
+            `
+            DELETE
+            FROM role_permissions
+            WHERE role_id = $1
+            `,
+            [roleId]
+        );
+
+        //====================================================
+        // Bulk Insert
+        //====================================================
+
+        if (values.length > 0) {
+
+            const placeholders = values
+                .map((_, i) => {
+
+                    const p = i * 2;
+
+                    return `($${p + 1}, $${p + 2})`;
+
+                })
+                .join(", ");
+
+            const params = values.flat();
+
+            await client.query(
+                `
+                INSERT INTO role_permissions
+                (
+                    role_id,
+                    permission_id
+                )
+                VALUES
+                ${placeholders}
+                `,
+                params
+            );
+
+        }
+
+        await client.query("COMMIT");
+
+        return this.getRoles(req, res);
+
+    }
+    catch (err) {
+
+        await client.query("ROLLBACK");
+
+        console.error(err);
+
+        res.status(500).send("Unable to save role permissions");
+
+    }
+    finally {
+
+        client.release();
+
+    }
+
+};
+
+/* exports.postEditRolePermissions = async (req, res) => {
+
+    const db = require('../config/db');
+
+    const client = await db.connect();
+
+    try {
+
+        await client.query('BEGIN');
+
+        const roleId =
+            req.params.id;
+
+        const permissions =
+            req.body.permissions || [];
+
+        const permissionIds =
+            Array.isArray(permissions)
+                ? permissions
+                : [permissions];
+
+        await client.query(
+            `
+            DELETE
+            FROM role_permissions
+            WHERE role_id = $1
+            `,
+            [roleId]
+        );
+
+        for (const permissionId of permissionIds) {
+
+            await client.query(
+                `
+                INSERT INTO role_permissions
+                (
+                    role_id,
+                    permission_id
+                )
+                VALUES
+                (
+                    $1,
+                    $2
+                )
+                `,
+                [
+                    roleId,
+                    permissionId
+                ]
+            );
+
+        }
+
+        //==== Saving delegation_scope ============//
+
+
+        await client.query('COMMIT');
+
+        req.session.updatedId =
+            roleId;
+
+        return exports.getRoles(
+            req,
+            res
+        );
+
+    } catch (err) {
+
+        await client.query(
+            'ROLLBACK'
+        );
+
+        console.error(err);
+
+        return res
+            .status(500)
+            .send(
+                'Error saving permissions.'
+            );
+
+    } finally {
+
+        client.release();
+
+    }
+
+}; */

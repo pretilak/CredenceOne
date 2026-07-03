@@ -129,6 +129,24 @@
                                     </li>
                                 <% } %>
 
+                                <% if (permissions.includes('permissions.view')) { %>
+
+                                    <li>
+
+                                        <a href="/settings/rolePermissions"
+                                        hx-get="/settings/rolePermissions"
+                                        hx-target="#main-content"
+                                        hx-swap="innerHTML"
+                                        hx-push-url="true">
+
+                                            Role Permissions
+
+                                        </a>
+
+                                    </li>
+
+                                <% } %>
+
                             </ul>
 
                     </li>

@@ -35,6 +35,17 @@
 
         <td>
 
+            <button
+                class="btn-secondary"
+                hx-get="/settings/roles/${role.id}/rolePermissions"
+                hx-target="#main-content"
+                hx-swap="innerHTML"
+                hx-push-url="true">
+
+                    Permissions
+
+            </button>
+
             <button class="btn-secondary" hx-get="/settings/roles/${role.id}/edit" hx-target="#modal"
                 hx-swap="innerHTML" ${disableEdit ? 'disabled' : '' } title="${
                         !permissions.includes('roles.edit')

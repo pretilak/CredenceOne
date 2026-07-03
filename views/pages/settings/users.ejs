@@ -40,6 +40,17 @@
 
         <td>
 
+            <button
+                class="btn-secondary"
+                hx-get="/settings/users/${user.id}/userPermissions"
+                hx-target="#main-content"
+                hx-swap="innerHTML"
+                hx-push-url="true">
+
+                    Permissions
+
+            </button>
+
             <button class="btn-secondary" hx-get="/settings/users/${user.id}/edit" hx-target="#modal"
                 hx-swap="innerHTML" ${disableEdit ? 'disabled' : '' } title="${
                         !permissions.includes('users.edit')

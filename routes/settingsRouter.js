@@ -54,6 +54,10 @@ router.post('/settings/roles/:id', requirePermission('roles.edit'), settingsCont
 
 router.delete('/settings/roles/:id', requirePermission('roles.delete'), settingsController.deleteRole);
 
+//Role Permissions
+router.get('/settings/roles/:id/rolePermissions', requirePermission('roles.permissions.view'), settingsController.getEditRolePermissions);
+router.post('/settings/roles/:id/permissions', requirePermission('roles.permissions.edit'), settingsController.postEditRolePermissions);
+
 //Users
 router.get('/settings/users', requirePermission('users.view'), settingsController.getUsers);
 
@@ -63,6 +67,11 @@ router.post('/settings/users', requirePermission('users.create'), settingsContro
 router.post('/settings/users/validate-email', requirePermission('users.edit'), settingsController.validateEmail);
 router.get('/settings/users/:id/edit', requirePermission('users.edit'), settingsController.getEditUser);
 router.post('/settings/users/:id', requirePermission('users.edit'), settingsController.updateUser);
+
+//User Permissions
+router.get('/settings/users/:id/userPermissions', requirePermission('users.edit'), settingsController.getEditUserPermissions);
+router.post('/settings/users/:id/userPermissions', requirePermission('users.edit'), settingsController.postEditUserPermissions);
+
 
 //Companies
 router.get('/settings/companies', requirePermission('companies.view'), settingsController.getCompanies);
@@ -75,5 +84,9 @@ router.post('/settings/companies/:id', requirePermission('companies.edit'), sett
 
 //Company->Users
 router.get('/settings/companies/:id/users', requirePermission('users.view'), settingsController.getCompanyUsers);
+
+//Permissions
+router.post('/settings/roles/:id/rolePermissions', requirePermission('permissions.edit'), settingsController.postEditRolePermissions);
+
 
 module.exports = router;

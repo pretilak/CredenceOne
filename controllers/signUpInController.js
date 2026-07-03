@@ -109,7 +109,8 @@ exports.postLogin = async (req, res) => {
             SELECT
                 u.*,
                 r.role_code,
-                r.role_name
+                r.role_name,
+                r.role_scope
             FROM users u
             LEFT JOIN roles r
                 ON r.id = u.role_id
@@ -202,6 +203,7 @@ exports.postLogin = async (req, res) => {
             role_id: user.role_id,
             role_code: user.role_code,
             role_name: user.role_name,
+            role_scope: user.role_scope,
 
             displayName:
                 user.name ||

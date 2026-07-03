@@ -1,174 +1,125 @@
-<% function renderUsers() { let rows='' ; users.forEach(user=> {
+<div class="table-container">
 
-    const disableEdit =
-    !permissions.includes('users.edit');
+    <table>
 
-    const disableDelete =
-    !permissions.includes('users.delete');
+        <thead>
 
-    rows += `
+            <tr class="action-row">
 
-    <tr id="user-${user.id}" class="${
-            updatedId == user.id
-                ? 'updated-row'
-                : ''
-        }">
+                <th colspan="4">
 
-        <td>
-            ${user.name || ''}
-        </td>
+                    <div class="action-row-content">
 
-        <td>
-            ${user.email}
-        </td>
+                        <span class="title">
 
-        <td>
-            ${user.role_name}
-        </td>
+                            Permissions
 
-        <td>
-            ${user.is_active ? 'Yes' : 'No'}
-        </td>
+                        </span>
 
-        <td>
-            ${user.is_2fa_enabled ? 'Yes' : 'No'}
-        </td>
+                        <span class="toolbar-actions">
 
-        <td>
+                            <input
+                                type="text"
+                                id="tableFilter"
+                                placeholder="Search roles...">
 
-            <button class="btn-secondary" hx-get="/settings/users/${user.id}/edit" hx-target="#modal"
-                hx-swap="innerHTML" ${disableEdit ? 'disabled' : '' } title="${
-                        !permissions.includes('users.edit')
-                            ? 'No permission'
-                            : ''
-                    }">
+                        </span>
 
-                Edit
+                    </div>
 
-            </button>
+                </th>
 
-        </td>
+            </tr>
 
-    </tr>
+            <tr class="header-row">
 
-    `;
-    });
+                <th class="sortable">
+                    Role Name
+                </th>
 
-    return rows;
+                <th class="sortable">
+                    Role Code
+                </th>
 
-    } %>
+                <th class="sortable">
+                    System
+                </th>
 
-    <div class="table-container">
+                <th>
+                    Action
+                </th>
 
-        <table>
+            </tr>
 
-            <colgroup>
+        </thead>
 
-                <col style="width: 24%">
-                <col style="width: 28%">
-                <col style="width: 22%">
-                <col style="width: 8%">
-                <col style="width: 6%">
-                <col style="width: 12%">
+        <tbody>
 
-            </colgroup>
+            <% roles.forEach(role => { %>
 
-            <thead>
+                <tr
+                    id="role-<%= role.id %>"
+                    class="<%= updatedId == role.id ? 'updated-row' : '' %>">
 
-                <!-- ===================================== -->
-                <!-- Action Row -->
-                <!-- ===================================== -->
+                    <td>
 
-                <tr class="action-row">
+                        <%= role.role_name %>
 
-                    <th colspan="7">
+                    </td>
 
-                        <div class="action-row-content">
+                    <td>
 
-                            <span class="title">
-                                Users -
-                                <%= company.name %>
-                            </span>
+                        <%= role.role_code %>
 
-                            <div class="toolbar-actions">
+                    </td>
 
-                                <input type="text" id="tableFilter" placeholder="Search...">
+                    <td>
 
-                                <button class="btn-secondary" hx-get="/settings/companies" hx-target="#main-content"
-                                    hx-swap="innerHTML" hx-push-url="true">
+                        <%= role.is_system
+                            ? 'Yes'
+                            : 'No' %>
 
-                                    ← Back
+                    </td>
 
-                                </button>
+                    <td>
 
-                                <% if (permissions.includes('users.create')) { %>
+                        <button
+                            class="btn-secondary"
+                            hx-get="/settings/roles/<%= role.id %>/permissions"
+                            hx-target="#main-content"
+                            hx-swap="innerHTML"
+                            hx-push-url="true">
 
-                                    <button class="btn-primary" hx-get="/settings/users/add?companyId=<%= company.id %>"
-                                        hx-target="#modal" hx-swap="innerHTML">
+                            Permissions
 
-                                        + Add User
+                        </button>
 
-                                    </button>
-
-                                <% } %>
-
-                            </div>
-
-                        </div>
-
-
-                    </th>
+                    </td>
 
                 </tr>
 
-                <!-- ===================================== -->
-                <!-- Header Row -->
-                <!-- ===================================== -->
+            <% }) %>
 
-                <tr class="header-row">
+        </tbody>
 
-                    <th class="sortable">Name</th>
+    </table>
 
-                    <th class="sortable">Email</th>
+</div>
 
-                    <th class="sortable">Role</th>
+<script>
 
-                    <th>Active</th>
+    initTablePage();
 
-                    <th>2FA</th>
+    enableTableFilter(
+        '#tableFilter',
+        'tbody tr'
+    );
 
-                    <th>Action</th>
+    enableTableSorting(
+        '.table-container table'
+    );
 
-                </tr>
-
-            </thead>
-
-            <tbody>
-
-                <%- renderUsers() %>
-
-            </tbody>
-
-        </table>
-
-    </div>
-
-    <script>
-        initTablePage();
-    </script>
-
-    <script>
-        enableTableFilter(
-            '#tableFilter',
-            'tbody tr'
-        );
-    </script>
-
-    <script>
-        enableTableSorting(
-            '.table-container table'
-        );
-    </script>
+</script>
 
     <style>
         /* ========================================= */

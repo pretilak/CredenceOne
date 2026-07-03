@@ -1,0 +1,467 @@
+<form id="permissionsForm" class="permissions-form" hx-post="/settings/roles/<%= role.id %>/rolePermissions"
+    hx-target="#main-content" hx-swap="innerHTML">
+
+    <div class="table-container permissions-container">
+
+        <!-- ========================================= -->
+        <!-- Header -->
+        <!-- ========================================= -->
+
+        <div class="permissions-header">
+
+            <div>
+
+                <h2>
+                    Permissions - <%= role.role_name %>
+                </h2>
+
+                <div class="role-code">
+                    <%= role.role_code %>
+                </div>
+
+            </div>
+
+            <div class="header-actions">
+
+                <button type="button" class="btn-secondary" hx-get="/settings/roles" hx-target="#main-content"
+                    hx-swap="innerHTML" hx-push-url="true">
+
+                    ← Back
+
+                </button>
+
+                <button id="saveBtn" type="submit" class="btn-primary" disabled>
+
+                    Save
+
+                </button>
+            </div>
+
+        </div>
+
+
+        <!-- ========================================= -->
+        <!-- Permission Cards -->
+        <!-- ========================================= -->
+
+        <div class="permissions-grid">
+
+            <% Object.keys(groupedPermissions).forEach(moduleName => { %>
+
+                <div class="permission-card">
+
+                    <h3><%= moduleName %></h3>
+
+                    <div class="permission-list">
+
+                        <% groupedPermissions[moduleName].forEach(permission => { %>
+
+                            <div class="permission-item">
+
+                                <label>
+
+                                    <input
+                                        type="checkbox"
+                                        name="permissions"
+                                        value="<%= permission.id %>"
+                                        <%= permission.assigned ? 'checked' : '' %>>
+
+                                    <span class="permission-name">
+
+                                        <%= permission.permission_name %>
+
+                                    </span>
+
+                                </label>
+
+
+
+                            </div>
+
+                        <% }) %>
+
+                    </div>
+
+                </div>
+
+            <% }) %>
+
+        </div>
+
+    </div>
+
+</form>
+
+<script>
+
+    (() => {
+
+        const form =
+            document.querySelector('.permissions-form');
+
+        if (form) {
+
+            enableSaveOnChange(form);
+
+        }
+
+    })();
+
+    //Toggle delegation-badge
+    document.querySelectorAll('.delegation-badge').forEach(badge => {
+
+    badge.addEventListener('click', () => {
+
+        const states = ['platform', 'company', 'both'];
+
+        let current =
+            badge.dataset.scope;
+
+        let next =
+            states[(states.indexOf(current) + 1) % states.length];
+
+        // Update data attribute
+        badge.dataset.scope = next;
+
+        // Update text
+        badge.textContent =
+            next.charAt(0).toUpperCase() + next.slice(1);
+
+        // Update colour
+        badge.classList.remove(
+            'platform',
+            'company',
+            'both'
+        );
+
+        badge.classList.add(next);
+
+        // Update hidden input
+        const hidden =
+            document.querySelector(
+                `input[name="delegation_scope_${badge.dataset.permissionId}"]`
+            );
+
+        hidden.value = next;
+
+        // Notify enableSaveOnChange()
+        hidden.dispatchEvent(
+            new Event('change', { bubbles: true })
+        );
+
+    });
+
+});
+
+</script>
+
+<style>
+    form.permissions-form {
+
+        display: flex;
+
+        flex-direction: column;
+
+        height: 100%;
+
+        min-height: 0;
+
+    }
+
+
+    /*=========================================*/
+    /* Permissions Container                   */
+    /*=========================================*/
+
+    .permissions-container {
+
+        display: flex;
+
+        flex-direction: column;
+
+        padding: 0px;
+
+    }
+
+
+    /*=========================================*/
+    /* Header                                  */
+    /*=========================================*/
+
+    .permissions-header {
+
+        position: sticky;
+
+        top: 0;
+
+        z-index: 100;
+
+        background: white;
+
+        display: flex;
+
+        justify-content: space-between;
+
+        align-items: flex-end;
+
+        padding-bottom: 15px;
+
+        margin-bottom: 20px;
+
+        border-bottom: 1px solid #e2e8f0;
+
+        flex-shrink: 0;
+
+        padding: 15px;
+
+    }
+
+    .permissions-header h2 {
+
+        margin: 0;
+
+    }
+
+    .role-code {
+
+        margin-top: 5px;
+
+        color: #64748b;
+
+        font-size: 13px;
+
+    }
+
+    .header-actions {
+
+        display: flex;
+
+        gap: 10px;
+
+    }
+
+
+    /*=========================================*/
+    /* Permission Grid                         */
+    /*=========================================*/
+
+    .permissions-grid {
+
+        display: grid;
+
+        grid-template-columns:
+            repeat(auto-fit,
+                minmax(300px, 1fr));
+
+        gap: 18px;
+
+        align-content: start;
+
+    }
+
+
+    /*=========================================*/
+    /* Permission Card                         */
+    /*=========================================*/
+
+    .permission-card {
+
+        background: white;
+
+        border: 1px solid #dbe4ef;
+
+        border-radius: 8px;
+
+        padding: 18px;
+
+        min-height: 220px;
+
+        box-shadow:
+            0 1px 3px rgba(0, 0, 0, 0.05);
+
+        display: flex;
+
+        flex-direction: column;
+
+        position: relative;
+
+        z-index: 1;
+
+    }
+
+    .permission-card h3 {
+
+        margin: 0 0 14px;
+
+        padding-bottom: 10px;
+
+        border-bottom: 1px solid #edf2f7;
+
+        color: #1e293b;
+
+    }
+
+
+    /*=========================================*/
+    /* Permission List                         */
+    /*=========================================*/
+
+    .permission-list {
+
+        display: flex;
+
+        flex-direction: column;
+
+        gap: 12px;
+
+    }
+
+.permission-item {
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    gap: 12px;
+
+    margin-bottom: 12px;
+
+}
+
+.permission-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    cursor: pointer;
+}
+
+.permission-label input[type=":checkbox"] {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.delegation-badge {
+    min-width: 80px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: capitalize;
+    cursor: pointer;
+    user-select: none;
+}
+
+.delegation-badge.platform {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.delegation-badge.company {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.delegation-badge.both {
+    background: #ede9fe;
+    color: #7c3aed;
+}
+
+.delegation-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 1px 4px rgba(0,0,0,.15);
+}
+
+    .permission-item input {
+
+        width: 16px;
+
+        height: 16px;
+
+    }
+
+
+    /*=========================================*/
+    /* Responsive                              */
+    /*=========================================*/
+
+    @media (max-width: 1200px) {
+
+        .permissions-grid {
+
+            grid-template-columns:
+                repeat(3,
+                    1fr);
+
+        }
+
+    }
+
+    @media (max-width: 900px) {
+
+        .permissions-grid {
+
+            grid-template-columns:
+                repeat(2,
+                    1fr);
+
+        }
+
+    }
+
+    @media (max-width: 600px) {
+
+        .permissions-grid {
+
+            grid-template-columns:
+                1fr;
+
+        }
+
+    }
+
+    /* 3. Style your primary button to match the modern design system */
+    .btn-primary {
+        background-color: #007bff;
+        color: #ffffff;
+        border: none;
+        padding: 6px 14px;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+        transition: background-color 0.15s ease-in-out;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+        /* Darker blue shade on mouse hover interaction */
+    }
+
+    .btn-primary:disabled {
+        background: #cbd5e1;
+        cursor: not-allowed;
+        opacity: .7;
+    }
+
+    .btn-secondary {
+        background-color: #f8fafc;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+        padding: 6px 14px;
+        border-radius: 4px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s ease-in-out;
+    }
+
+    .btn-secondary:hover {
+        background-color: #e2e8f0;
+        color: #0f172a;
+    }
+</style>

@@ -1,0 +1,618 @@
+<div class="modal-overlay">
+
+    <div class="modal-box">
+
+        <h2>
+            <%= isEdit ? 'Edit User' : 'Add User' %>
+        </h2>
+
+        <form class="form-grid1" hx-post="<%= isEdit ? `/settings/users/${user.id}` : '/settings/users' %>" hx-target="#main-content"
+            hx-swap="innerHTML" hx-on="
+                htmx:beforeRequest:
+                    disableSave(this);
+
+                htmx:afterSwap:
+                    if(event.detail.target.id === 'main-content'){
+                        closeModal();
+                    }
+            ">
+
+            <!-- ============================= -->
+            <!-- Name -->
+            <!-- ============================= -->
+            <% 
+                const nameInputHtml = `
+                    <div class="form-group1">
+                        <label>Name</label>
+                        <input type="text" name="name" value="${user.name || ''}" required>
+                        
+                    </div>
+                `; 
+            %>
+
+            <!-- ============================= -->
+            <!-- Email -->
+            <!-- ============================= -->
+            <% 
+            const emailInputHtml = `
+                <div class="form-group1">
+                    <label>Email</label>
+                    <input type="email" name="email" value="${user.email || ''}" required ${isEdit ? 'readonly' : ''}
+                        hx-post="/settings/users/validate-email" hx-trigger="input changed delay:500ms"
+                        hx-target="#emailValidation" hx-swap="innerHTML" hx-include="[name='email'], [name='user_id']">
+                
+                    <div id="emailValidation">&nbsp;</div>
+                </div>
+                
+
+                <input type="hidden" name="user_id" value="${user.id || ''}">
+            `; 
+            %>
+
+            <!-- ============================= -->
+            <!-- Company -->
+            <!-- ============================= -->
+            <% 
+            const companyFieldHtml = `
+                <div id="companyGroup" class="form-group1">
+                    <label>Company</label>
+                    ${isEdit ? `
+                        <!-- Your edit HTML code goes here -->
+                        <input type="text" value="${companies.find(c => c.id == user.company_id)?.name || ''}" readonly>
+                        <input type="hidden" name="company_id" value="${user.company_id || ''}">
+                    ` : `
+                        <!-- Your add/select HTML code goes here -->
+                        <select id="company_id" name="company_id" required ${companyId ? 'disabled' : ''}>
+                            <option value="">Select Company</option>
+                                ${companies.map(company => `
+                                    <option value="${company.id}" ${(companyId == company.id || user.company_id == company.id) ? 'selected' : ''}>
+                                        ${company.name}
+                                    </option>
+                                `).join('')}
+                        </select>
+                    `}
+                </div>
+            `; 
+            %>
+
+            <!-- ============================= -->
+            <!-- Role -->
+            <!-- ============================= -->
+            <%
+            const roleFieldHtml = `
+                <div class="form-group1">
+
+                    <label>Role</label>
+
+                    ${
+                        isEdit
+                        ? `
+                            <input
+                                type="text"
+                                value="${roles.find(r => r.id == user.role_id)?.role_name || ''}"
+                                readonly>
+
+                            <input
+                                type="hidden"
+                                name="role_id"
+                                value="${user.role_id || ''}">
+                        `
+                        : `
+                            <select
+                                id="role_id"
+                                name="role_id"
+                                required>
+
+                                <option value="">
+                                    Select Role
+                                </option>
+
+                                ${roles.map(r => `
+                                    <option
+                                        value="${r.id}"
+                                        data-role-scope="${r.role_scope}"
+                                        ${user.role_id == r.id ? 'selected' : ''}>
+
+                                        ${r.role_name}
+
+                                    </option>
+                                `).join('')}
+
+                            </select>
+                        `
+                    }
+
+                </div>
+            `;
+            %>
+                  
+            <!-- ============================= -->
+            <!-- Password -->
+            <!-- ============================= -->
+            <% 
+            const passwordFieldsHtml = `
+                <!-- ============================= -->
+                <!-- Password -->
+                <!-- ============================= -->
+                <div class="form-group1">
+                    <label>Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+
+                <!-- ============================= -->
+                <!-- Confirm Password -->
+                <!-- ============================= -->
+                <div class="form-group1">
+                    <label>Confirm Password</label>
+                    <input type="password" id="confirmPassword" name="confirm_password" required>
+                </div>
+
+                <!-- Moved into a structural format compatible with your layout fixes -->
+                <div id="passwordError">&nbsp;</div>
+            `; 
+            %>
+
+            <!-- ============================= -->
+            <!-- Active -->
+            <!-- ============================= -->
+            <% 
+            const activeCheckboxHtml = `
+                <!-- ============================= -->
+                <!-- Active Checkbox Container -->
+                <!-- ============================= -->
+                <div class="form-group1 checkbox-group">
+                    <input type="checkbox" name="is_active" ${user.is_active !== false ? 'checked' : ''}>
+                    <label>Active</label>
+                </div>
+
+                <!-- Layout-safe error container -->
+                <div id="formError" class="validation-message1">&nbsp;</div>
+            `; 
+            %>
+
+            <!-- ============================= -->
+            <!-- Form Actions -->
+            <!-- ============================= -->
+            <% 
+            const formActionsHtml = `
+                <div class="modal-actions1">
+                    <button type="button" onclick="closeModal()">
+                        Cancel
+                    </button>
+                    <button type="submit" id="saveBtn" disabled>
+                        Save
+                    </button>
+                </div>
+            `; 
+            %>
+
+
+            <!-- ============================= -->
+            <!-- Form Field Placement -->
+            <!-- ============================= -->
+            
+            <%- nameInputHtml %>
+
+            <%- emailInputHtml %>
+            
+            <% if (showCompanyField) { %>
+                <%- companyFieldHtml %>
+            <% } else { %>
+                <input
+                    type="hidden"
+                    id="company_id"
+                    name="company_id"
+                    value="<%= companyId %>">
+            <% } %>
+
+            <input type="hidden" name="return_company_id" value="<%= companyId || '' %>">
+
+            <%- roleFieldHtml %>
+
+            <% if (!isEdit) { %>
+                <%- passwordFieldsHtml %>
+            <% } %>
+
+            <%- activeCheckboxHtml %>
+
+            <%- formActionsHtml %>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    function emailIsValid() {
+
+        const emailValidation =
+            document.getElementById(
+                'emailValidation'
+            );
+
+        if (!emailValidation) {
+            return true;
+        }
+
+        return !emailValidation.querySelector(
+            '.validation-error'
+        );
+    }
+
+    window.updateButton =
+        enableSaveOnChange(
+            document.querySelector(
+                '.modal-box form'
+            ),
+            emailIsValid
+        );
+</script>
+
+<script>
+
+    (() => {
+
+        function validatePasswords() {
+
+            const password =
+                document.getElementById('password');
+
+            const confirmPassword =
+                document.getElementById('confirmPassword');
+
+            const error =
+                document.getElementById('passwordError');
+
+            const saveBtn =
+                document.getElementById('saveBtn');
+
+            if (
+                !password ||
+                !confirmPassword ||
+                !error ||
+                !saveBtn
+            ) {
+                return;
+            }
+
+            if (
+                password.value.length === 0 &&
+                confirmPassword.value.length === 0
+            ) {
+
+                error.innerText = '';
+                error.style.visibility = 'hidden';
+
+                saveBtn.disabled = true;
+
+                return;
+            }
+
+            if (
+                confirmPassword.value.length > 0 &&
+                password.value !== confirmPassword.value
+            ) {
+
+                error.innerText =
+                    'Passwords do not match';
+
+                error.style.visibility =
+                    'visible';
+
+                saveBtn.disabled = true;
+
+                return;
+            }
+
+            error.innerText = '';
+            error.style.visibility = 'hidden';
+
+            //saveBtn.disabled = false;
+        }
+
+        const password =
+            document.getElementById('password');
+
+        const confirmPassword =
+            document.getElementById('confirmPassword');
+
+        if (password) {
+            password.addEventListener(
+                'input',
+                validatePasswords
+            );
+        }
+
+        if (confirmPassword) {
+            confirmPassword.addEventListener(
+                'input',
+                validatePasswords
+            );
+        }
+
+    })();
+
+</script>
+
+<script>
+    document.body.addEventListener(
+        'htmx:responseError',
+        function (evt) {
+
+            const errorDiv =
+                document.getElementById(
+                    'formError'
+                );
+
+            if (errorDiv) {
+
+                errorDiv.innerText =
+                    evt.detail.xhr.responseText;
+
+                errorDiv.style.visibility =
+                    'visible';
+
+            }
+
+        }
+    );
+
+    function clearFormError() {
+
+        const errorDiv =
+            document.getElementById(
+                'formError'
+            );
+
+        if (!errorDiv) {
+            return;
+        }
+
+        errorDiv.innerText = '';
+
+        errorDiv.style.visibility =
+            'hidden';
+    }
+
+    document
+        .querySelectorAll(
+            '.modal-box input, .modal-box select'
+        )
+        .forEach(field => {
+
+            field.addEventListener(
+                'input',
+                clearFormError
+            );
+
+            field.addEventListener(
+                'change',
+                clearFormError
+            );
+
+        });
+
+</script>
+
+<script>
+    document.body.addEventListener(
+        'htmx:afterSwap',
+        function (evt) {
+
+            if (
+                evt.target.id ===
+                'emailValidation'
+            ) {
+
+                const emailField =
+                    document.querySelector(
+                        '[name="email"]'
+                    );
+
+                if (emailField) {
+
+                    emailField.dispatchEvent(
+                        new Event(
+                            'change',
+                            { bubbles: true }
+                        )
+                    );
+
+                }
+            }
+        }
+    );
+    
+</script>
+
+<script>
+(() => {
+
+    const role =
+        document.getElementById('role_id');
+
+    const companyGroup =
+        document.getElementById('companyGroup');
+
+    const company =
+        document.getElementById('company_id');
+
+    if (!role || !companyGroup || !company) {
+        return;
+    }
+
+    function updateCompanyVisibility() {
+
+        const scope =
+            role.selectedOptions[0]
+                ?.dataset.roleScope;
+
+        if (scope === 'platform') {
+
+            companyGroup.style.display = 'none';
+
+            company.required = false;
+
+            company.value = '';
+
+        }
+        else {
+
+            companyGroup.style.display = '';
+
+            company.required = true;
+
+        }
+
+        updateButton();
+
+    }
+
+    role.addEventListener(
+        'change',
+        updateCompanyVisibility
+    );
+
+    updateCompanyVisibility();
+
+})();
+
+</script>
+
+<style>
+    /* 1. Force the layout back to a 50/50 layout by explicitly targetting the specific class */
+    form.form-grid1 {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important; 
+        gap: 20px !important;
+        align-items: start !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* 2. Standardize field container column bounds */
+    .form-grid1 .form-group1 {
+        width: 100% !important;
+        position: relative; /* Setup safe anchor workspace for dynamic error text positioning */
+        box-sizing: border-box !important;
+    }
+
+    /* 3. Handle validation positioning cleanly below the text input baseline */
+    .form-grid1 .validation-message1 {
+        font-size: 0.85rem;
+        margin-top: 4px;
+        display: block;
+        width: 100%;
+    }
+
+    .form-grid1 .validation-error {
+        color: #dc2626;
+    }
+
+    .form-grid1 .validation-success {
+        color: #16a34a;
+    }
+
+    /* 4. Labels Formatting Blueprint */
+    .form-grid1 .form-group1 label {
+        color: #334155;
+        font-size: 14px;
+        font-weight: 600;
+        display: block !important;
+        margin-bottom: 4px !important;
+    }
+
+    /* 5. Inputs & Select Dropdown Dimensional Synchronization */
+    .form-grid1 .form-group1 input,
+    .form-grid1 .form-group1 select,
+    .form-grid1 .form-group1 textarea {
+        display: block !important;
+        width: 100% !important;
+        height: 38px !important; /* Restores identical clean rectangular heights */
+        padding: 8px 12px !important; /* Re-applies spacious text element layout padding */
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 6px !important;
+        font-size: 14px !important;
+        transition: border-color .15s, box-shadow .15s !important;
+        box-sizing: border-box !important;
+    }
+
+    .form-grid1 .form-group1 input:focus,
+    .form-grid1 .form-group1 select:focus,
+    .form-grid1 .form-group1 textarea:focus {
+        outline: none !important;
+        border-color: #007bff !important;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, .12) !important;
+    }
+
+    .form-grid1 .checkbox-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+    }
+
+    .form-grid1 .checkbox-group input {
+        width: auto !important;
+        height: auto !important;
+    }
+
+
+/* ===================================== */
+/* Form Actions */
+/* ===================================== */
+
+.modal-actions1 {
+    /* FIXED: Uses 100% column fraction sizing to prevent escaping container edges */
+    grid-column: 1 / -1 !important; 
+    width: 100% !important;        
+    display: flex !important;
+    justify-content: flex-end !important; /* Pulls the buttons smoothly over to the right side */
+    gap: 10px !important;
+    margin-top: 20px !important; /* Gives breathing room below the checkbox row */
+    box-sizing: border-box !important;
+}
+
+/* Cancel */
+.modal-actions1 button:first-child {
+    background: #f1f5f9;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+}
+
+/* Save */
+.modal-actions1 button:last-child {
+    background: #007bff;
+    color: white;
+    border: none;
+}
+
+/* Shared Button Properties */
+.modal-actions1 button {
+    min-width: 110px;
+    padding: 10px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    box-sizing: border-box; /* Crucial block element standard constraint */
+}
+
+.modal-actions1 button:hover {
+    opacity: .95;
+}
+
+/* Disabled State Alignment */
+.modal-actions1 button:disabled {
+    background: #cbd5e1;
+    cursor: not-allowed;
+    opacity: .7;
+}
+
+    input[type="email"] {
+        min-width: 0;
+    }
+
+</style>

@@ -1,84 +1,133 @@
-    function enableSaveOnChange(form, extraValidationFn =() => true) {
+function enableSaveOnChange(form, extraValidationFn = () => true) {
 
-        const saveBtn = form.querySelector('#saveBtn');
+    const saveBtn = form.querySelector('[type="submit"]');
 
-        function getFormState() {
-            const data = {};
+    function getFormState() {
 
-            form.querySelectorAll('input, select, textarea').forEach(el => {
-                if (!el.name) return;
+        const data = {};
 
-                if (el.type === 'checkbox') {
-                    data[el.name] = el.checked;
+        form.querySelectorAll(
+            'input, select, textarea'
+        ).forEach(el => {
+
+            if (!el.name) return;
+
+            if (el.type === 'checkbox') {
+
+                if (form.querySelectorAll(`[name="${el.name}"]`).length > 1) {
+
+                    if (!data[el.name]) {
+
+                        data[el.name] = [];
+
+                    }
+
+                    if (el.checked) {
+
+                        data[el.name].push(el.value);
+
+                    }
+
                 } else {
-                    data[el.name] = el.value;
+
+                    data[el.name] = el.checked;
+
                 }
-            });
 
-            return data;
-        }
+            } else {
 
-        const initialState = getFormState();
+                data[el.name] = el.value;
 
-        function hasChanged() {
-            const currentState = getFormState();
-            //console.log("Current State:", currentState);
-            return Object.keys(initialState).some(key =>
-                initialState[key] !== currentState[key]
-            );
-        }
-
-        function isFormValid() {
-
-            // Validate required fields first
-            if (!form.checkValidity()) {
-                return false;
             }
 
-            // Additional dynamic validation
-            const currency =
-                form.querySelector('[name="currency_code"]');
+        });
+
+        return data;
+
+    }
+
+    const initialState = getFormState();
+
+    function hasChanged() {
+
+        const currentState =
+            getFormState();
+
+        return Object.keys(initialState).some(key => {
+
+            const initial =
+                initialState[key];
+
+            const current =
+                currentState[key];
 
             if (
-                currency &&
-                !currency.disabled &&
-                !currency.value
+                Array.isArray(initial)
             ) {
-                return false;
+
+                return JSON.stringify(initial)
+                    !==
+                    JSON.stringify(current);
+
             }
 
-            return true;
-        }
+            return initial !== current;
 
-        function updateButton() {
-            
-            const allRequiredFieldsFilled = hasChanged() && isFormValid();
-            saveBtn.disabled = !allRequiredFieldsFilled || !passwordsMatch() || !extraValidationFn();
-        }
+        });
 
-        form.addEventListener('input', updateButton);
-        form.addEventListener('change', updateButton);
-
-        updateButton();
-
-        return updateButton;
     }
 
-    //helper function
-    function passwordsMatch() {
+    function isFormValid() {
 
-        const password =
-            document.getElementById('password');
-
-        const confirmPassword =
-            document.getElementById('confirmPassword');
-
-        if (!password || !confirmPassword) {
-            return true;
+        // Validate required fields first
+        if (!form.checkValidity()) {
+            return false;
         }
 
-        return (
-            password.value.length > 0 &&
-            password.value === confirmPassword.value
-        );
+        // Additional dynamic validation
+        const currency =
+            form.querySelector('[name="currency_code"]');
+
+        if (
+            currency &&
+            !currency.disabled &&
+            !currency.value
+        ) {
+            return false;
+        }
+
+        return true;
     }
+
+    function updateButton() {
+
+        const allRequiredFieldsFilled = hasChanged() && isFormValid();
+        saveBtn.disabled = !allRequiredFieldsFilled || !passwordsMatch() || !extraValidationFn();
+    }
+
+    form.addEventListener('input', updateButton);
+    form.addEventListener('change', updateButton);
+
+    updateButton();
+
+    return updateButton;
+}
+
+//helper function
+function passwordsMatch() {
+
+    const password =
+        document.getElementById('password');
+
+    const confirmPassword =
+        document.getElementById('confirmPassword');
+
+    if (!password || !confirmPassword) {
+        return true;
+    }
+
+    return (
+        password.value.length > 0 &&
+        password.value === confirmPassword.value
+    );
+}
